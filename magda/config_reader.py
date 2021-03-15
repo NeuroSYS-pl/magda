@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 import yaml
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
 
+from magda.module.factory import ModuleFactory
 from magda.pipeline.sequential import SequentialPipeline
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
 
@@ -18,10 +17,14 @@ class ConfigReader:
         parameters: Dict[str, Any] = field(default=None)
 
     @classmethod
-    def read(cls, config, module_factory, context=None, shared_parameters=None):
-        config_file = open(config)
-        parsed_yaml = yaml.safe_load(config_file)
-
+    def read(
+        cls,
+        config: str,
+        module_factory: ModuleFactory,
+        context: Optional[Any] = None,
+        shared_parameters: Optional[Dict] = None,
+    ):
+        parsed_yaml = yaml.safe_load(config)
         modules, shared_parameters, group_options = \
             cls._extract_information_from_yaml(parsed_yaml, shared_parameters)
 
@@ -46,7 +49,6 @@ class ConfigReader:
                         f"Module '{dependent_mod_name}' hasn't been defined in the config file, "
                         "whereas it's used as a dependency."
                     )
-
         return pipeline.build(context, shared_parameters)
 
     @staticmethod
