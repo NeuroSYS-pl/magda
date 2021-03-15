@@ -1,12 +1,11 @@
 from __future__ import annotations
-
-from typing import Iterable
+from typing import Iterable, Type
 
 from magda.module.module import Module
 from magda.decorators.common import module_typeguard
 
 
-def accept(*ancestors: Iterable[Module], self=False):
+def accept(*ancestors: Iterable[Type[Module]], self=False):
     """ Set module valid ancestors. """
     def wrapper(module_ref):
         module_typeguard(module_ref)
