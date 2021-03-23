@@ -17,17 +17,20 @@ test_dependencies = [
 setuptools.setup(
     name='magda',
     version='0.1.0',
-    author='NeuroSYS',
-    description='Library for building Modular and Asynchronous Graphs with Directed and Acyclic edges (MAGDA)',
+    author='NeuroSYS Research',
+    description=(
+        'Library for building Modular and Asynchronous Graphs '
+        'with Directed and Acyclic edges (MAGDA)'
+    ),
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/NeuroSYS-pl/magda',
+    keywords=(
+        'magda modular asynchronous parallelization'
+        'directed-graphs acyclic-graphs pipeline python'
+    ),
     packages=setuptools.find_packages(),
-    license="Apache 2",
-    classifiers=[
-        'Programming Language :: Python :: 3',
-        'Operating System :: OS Independent',
-    ],
+    license="Apache 2.0",
     entry_points={},
     python_requires='>=3.7',
     install_requires=dependencies,
