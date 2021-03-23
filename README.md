@@ -15,12 +15,15 @@
 
 ## Installation
 
+###### pip
+```
+pip install magda
+```
+
 ###### From the repository
 ```bash
 pip install https://github.com/NeuroSYS-pl/magda/archive/main.zip
 ```
-
-*More options will be available soon.*
 
 ## License
 [Apache-2.0 License](LICENSE)
