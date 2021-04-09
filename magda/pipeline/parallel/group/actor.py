@@ -17,14 +17,19 @@ class Actor:
         self.state_type = state_type
         self.graph = Graph(modules)
 
-    def run(self, job_id: UUID, request, results=[], is_regular_runtime=True):
+    async def bootstrap(self):
+        await self.graph.bootstrap()
+
+    async def run(self, job_id: UUID, request, results=[], is_regular_runtime=True):
         return FutureResult(
             job=job_id,
             group=self.name,
-            result=self.graph.run(request, results,
-                                  is_regular_runtime=is_regular_runtime,
-                                  state_type=self.state_type),
+            result=await self.graph.run(
+                request,
+                results,
+                is_regular_runtime=is_regular_runtime,
+            ),
         )
 
-    def teardown(self):
-        self.graph.teardown()
+    async def teardown(self):
+        await self.graph.teardown()

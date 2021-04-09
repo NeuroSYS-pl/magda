@@ -17,7 +17,7 @@ class ParallelPipeline(BasePipeline):
 
     def __init__(self):
         super().__init__()
-        self._groups = []
+        self._groups: List[Group] = []
 
     def add_group(self, group: Group) -> ParallelPipeline:
         self._groups.append(group)
@@ -34,7 +34,7 @@ class ParallelPipeline(BasePipeline):
             if m.group == group and dep.group != group
         ])
 
-    def build(self, context=None, shared_parameters=None) -> Runtime:
+    async def build(self, context=None, shared_parameters=None) -> Runtime:
         self.validate()
         if any([m.group is None for m in self.modules]):
             raise Exception('At least one module does not have a group property')
@@ -65,7 +65,7 @@ class ParallelPipeline(BasePipeline):
 
         self._mark_groups_state(self._groups, runtime_modules)
 
-        runtime_groups = []
+        runtime_groups: List[Group.Runtime] = []
         for group in self._groups:
             modules = [m for m in runtime_modules if m.group == group.name]
             dependent_modules_names = [m for module in modules for m in module.input_modules]
@@ -82,6 +82,7 @@ class ParallelPipeline(BasePipeline):
                 dependent_modules=dependent_modules,
                 dependent_modules_nonregular=dependent_modules_nonregular
             )
+            await runtime_group.bootstrap()
             runtime_groups.append(runtime_group)
 
         return Runtime(runtime_groups, context_ref, shared_parameters_ref)

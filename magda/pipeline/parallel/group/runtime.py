@@ -49,6 +49,9 @@ class GroupRuntime:
     def fulfills(self, names: Iterable[str]) -> bool:
         return set(names).issuperset(self.module_dependencies)
 
+    async def bootstrap(self):
+        await self.pool.bootstrap()
+
     async def run(self, job_id: UUID, request, results, is_regular_runtime):
         return asyncio.ensure_future(
             self.pool.run(
