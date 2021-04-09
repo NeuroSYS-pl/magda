@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
-from typing import List
+from typing import Any, List, Optional, Type
 
 from magda.module.module import Module
 
@@ -62,18 +63,17 @@ class Graph:
 
     def __init__(self, modules: List[Module.Runtime]):
         self._modules = self.TopologicalSorter(modules).get()
-        for module in self._modules:
-            module._on_bootstrap()
 
     @property
     def modules(self) -> List[Module.Runtime]:
         return self._modules.copy()
 
-    def run(self,
-            request,
-            results: List[Module.Result] = [],
-            is_regular_runtime=True,
-            state_type=None) -> List[Module.Result]:
+    async def run(
+        self,
+        request: Any,
+        results: List[Module.Result] = [],
+        is_regular_runtime: bool = True,
+    ) -> List[Module.Result]:
         """ Main method for running regular modules in the pipeline
 
         Modules are run one after another. The output from every module is saved to results array.
@@ -84,7 +84,9 @@ class Graph:
         for module in self._modules:
             if self._should_be_run(module=module, is_regular_runtime=is_regular_runtime):
                 data = Module.ResultSet([r for r in results if r.name in module.input_modules])
-                module_result = self._run_method_helper(module, data, request, is_regular_runtime)
+                module_result = await self._run_method_helper(
+                    module, data, request, is_regular_runtime
+                )
                 results.append(
                     Module.Result(
                         result=module_result,
@@ -96,30 +98,62 @@ class Graph:
                 )
         return results
 
-    def teardown(self):
+    async def bootstrap(self) -> None:
         for module in self._modules:
-            module.teardown()
+            await module._on_bootstrap()
 
-    def _should_be_run(self, module, is_regular_runtime):
+    async def teardown(self):
+        for module in self._modules:
+            if asyncio.iscoroutinefunction(module.teardown):
+                await module.teardown()
+            else:
+                module.teardown()
+
+    def _should_be_run(
+        self,
+        module: Type[Module.Runtime],
+        is_regular_runtime: bool,
+    ) -> bool:
         if is_regular_runtime:
             return module.is_regular_module or issubclass(type(module), Module.Aggregate)
         else:
             return not module.is_regular_module or issubclass(type(module), Module.Aggregate)
 
-    def _exposed_result(self, module, is_regular_runtime):
+    def _exposed_result(
+        self,
+        module: Type[Module.Runtime],
+        is_regular_runtime: bool,
+    ) -> Optional[str]:
         if is_regular_runtime and issubclass(type(module), Module.Aggregate):
             return None
         else:
             return module.exposed
 
-    def _run_method_helper(self, module, data, request, is_regular_runtime):
+    async def _run_method_helper(
+        self,
+        module: Type[Module.Runtime],
+        data: Module.ResultSet,
+        request: Any,
+        is_regular_runtime: bool,
+    ) -> Any:
         module_result = None
         if issubclass(type(module), Module.Aggregate):
             if is_regular_runtime:
-                module.aggregate(data=data, request=request)
+                if asyncio.iscoroutinefunction(module.aggregate):
+                    await module.aggregate(data=data, request=request)
+                else:
+                    module.aggregate(data=data, request=request)
                 module_result = []
             else:
-                module_result = module.process(data=data, request=request)
+                module_result = (
+                    await module.process(data=data, request=request)
+                    if asyncio.iscoroutinefunction(module.process)
+                    else module.process(data=data, request=request)
+                )
         else:
-            module_result = module.run(data=data, request=request)
+            module_result = (
+                await module.run(data=data, request=request)
+                if asyncio.iscoroutinefunction(module.run)
+                else module.run(data=data, request=request)
+            )
         return module_result

@@ -30,11 +30,11 @@ class BasePipeline(ABC):
             return self._shared_parameters
 
         @abstractmethod
-        def run(self, request):
+        async def run(self, request):
             raise NotImplementedError()
 
         @abstractmethod
-        def close(self):
+        async def close(self):
             raise NotImplementedError()
 
         @property
