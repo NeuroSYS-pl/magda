@@ -10,10 +10,10 @@ from magda.exceptions import ClosedPipelineException
 
 
 class SequentialPipeline(BasePipeline):
-    """ Synchronous processing pipeline """
+    """ Sequential processing pipeline """
 
     class Runtime(BasePipeline.Runtime):
-        """ Synchronous pipeline runner """
+        """ Sequential pipeline runner """
         def __init__(self, graph: Graph, context=None, shared_parameters=None):
             super().__init__(context, shared_parameters)
             self.graph = graph
