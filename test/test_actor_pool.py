@@ -17,9 +17,9 @@ class MultiplyActor:
         return self.factor * data
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='class')
 def ray_context():
-    ray.init(local_mode=True)
+    ray.init(num_cpus=1)
     yield None
     ray.shutdown()
 

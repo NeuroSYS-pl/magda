@@ -50,33 +50,39 @@ class TestSequentialPipeline:
     def test_pipeline_get_module_by_name_not_existing(self):
         assert self.pipeline.get_module('MockName') is None
 
-    def test_pipeline_build_no_modules(self):
-        runtime = self.pipeline.build(MockContext())
+    @pytest.mark.asyncio
+    async def test_pipeline_build_no_modules(self):
+        runtime = await self.pipeline.build(MockContext())
         assert len(runtime.modules) == 0
 
-    def test_pipeline_run_no_modules(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_run_no_modules(self):
         assert len(self.pipeline.modules) == 0
-        result = self.pipeline.build(MockContext()).run()
+        runtime = await self.pipeline.build(MockContext())
+        result = await runtime.run()
         assert isinstance(result, dict)
         assert len(result) == 0
 
-    def test_pipeline_run_single_module(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_run_single_module(self):
         module = MockModule('MockName').expose_result()
         self.pipeline.add_module(module)
-        results = self.pipeline.build(MockContext()).run()
+        runtime = await self.pipeline.build(MockContext())
+        results = await runtime.run()
 
         assert isinstance(results, dict)
         assert len(results) == 1
         assert 'MockName' in results
         assert results['MockName'] == 'output'
 
-    def test_pipeline_run_multiple_depending_modules(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_run_multiple_depending_modules(self):
         module_1 = MockModule('module_1')
         module_2 = MockModule('module_2')
         module_2.depends_on(module_1)
         self.pipeline.add_module(module_1)
         self.pipeline.add_module(module_2)
-        runtime = self.pipeline.build(MockContext())
+        runtime = await self.pipeline.build(MockContext())
 
         assert len(runtime.modules) == 2
         assert runtime.modules[0].name == 'module_1'
@@ -85,12 +91,13 @@ class TestSequentialPipeline:
         module_3 = MockModule('module_3')
         module_3.depends_on(module_2)
         self.pipeline.add_module(module_3)
-        runtime = self.pipeline.build(MockContext())
+        runtime = await self.pipeline.build(MockContext())
 
         assert len(runtime.modules) == 3
         assert runtime.modules[2].name == 'module_3'
 
-    def test_pipeline_is_regular_flag_shallow(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_is_regular_flag_shallow(self):
         @finalize
         class RegularModule(Module.Runtime):
             def run(self, **kwargs):
@@ -118,7 +125,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_regular)
         self.pipeline.add_module(module_aggregator)
         self.pipeline.add_module(module_regular_after_agg)
-        runtime = self.pipeline.build(MockContext())
+        runtime = await self.pipeline.build(MockContext())
 
         assert len(runtime.modules) == 3
         assert runtime.modules[0].name == 'reg_module' and runtime.modules[0].is_regular_module
@@ -126,7 +133,8 @@ class TestSequentialPipeline:
         assert runtime.modules[2].name == 'reg_module_after_agg' and \
             not runtime.modules[2].is_regular_module
 
-    def test_pipeline_is_regular_flag_deep(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_is_regular_flag_deep(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -173,7 +181,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_regular_after_agg11)
         self.pipeline.add_module(module_regular_after_agg12)
         self.pipeline.add_module(module_regular_after_agg121)
-        runtime = self.pipeline.build(MockContext())
+        runtime = await self.pipeline.build(MockContext())
 
         assert len(runtime.modules) == 9
         assert runtime.modules[0].name == 'reg_module1' and runtime.modules[0].is_regular_module
@@ -191,7 +199,8 @@ class TestSequentialPipeline:
         assert runtime.modules[8].name == 'reg_module_after_agg11' and \
             not runtime.modules[8].is_regular_module
 
-    def test_pipeline_module_depends_on_aggregate_and_regular_error(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_module_depends_on_aggregate_and_regular_error(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -226,9 +235,10 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_agg)
 
         with pytest.raises(Exception):
-            self.pipeline.build()
+            await self.pipeline.build()
 
-    def test_pipeline_modules_run_only_regular(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_modules_run_only_regular(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -261,7 +271,8 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_agg)
         self.pipeline.add_module(module_after_regular)
 
-        results = self.pipeline.build().run()
+        runtime = await self.pipeline.build()
+        results = await runtime.run()
 
         assert len(results) == 2
         assert 'regular' in results
@@ -269,7 +280,8 @@ class TestSequentialPipeline:
         assert 'after_agg' not in results
         assert 'after_reg' in results
 
-    def test_pipeline_modules_run_only_aggregate(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_modules_run_only_aggregate(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -302,7 +314,8 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_agg)
         self.pipeline.add_module(module_after_regular)
 
-        results = self.pipeline.build().process()
+        runtime = await self.pipeline.build()
+        results = await runtime.process()
 
         assert len(results) == 2
         assert 'regular' not in results
@@ -310,7 +323,8 @@ class TestSequentialPipeline:
         assert 'after_agg' in results
         assert 'after_reg' not in results
 
-    def test_pipeline_module_aggregate_keeps_state(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_module_aggregate_keeps_state(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -335,22 +349,23 @@ class TestSequentialPipeline:
         self.pipeline.add_module(regular)
         self.pipeline.add_module(aggregate)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
 
         aggregate_runtime_module = runtime.modules[1]
         assert aggregate_runtime_module.name == 'aggregate'
         assert aggregate_runtime_module.state_size == 0
         assert aggregate_runtime_module.state == []
 
-        runtime.run()
+        await runtime.run()
         assert aggregate_runtime_module.state_size == 1
         assert aggregate_runtime_module.state == ['state']
 
-        runtime.run()
+        await runtime.run()
         assert aggregate_runtime_module.state_size == 2
         assert aggregate_runtime_module.state == ['state', 'state']
 
-    def test_pipeline_module_aggregate_clears_state(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_module_aggregate_clears_state(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -377,21 +392,22 @@ class TestSequentialPipeline:
         self.pipeline.add_module(regular)
         self.pipeline.add_module(aggregate)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
 
         aggregate_runtime_module = runtime.modules[1]
         assert aggregate_runtime_module.name == 'aggregate'
 
-        runtime.run()
-        runtime.run()
+        await runtime.run()
+        await runtime.run()
         assert aggregate_runtime_module.state_size == 2
         assert aggregate_runtime_module.state == ['state', 'state']
 
-        runtime.process()
+        await runtime.process()
         assert aggregate_runtime_module.state_size == 0
         assert aggregate_runtime_module.state == []
 
-    def test_pipeline_module_after_gets_aggregated_results(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_module_after_gets_aggregated_results(self):
         @accept(self=True)
         @finalize
         class RegularModule(Module.Runtime):
@@ -422,45 +438,48 @@ class TestSequentialPipeline:
         self.pipeline.add_module(aggregate)
         self.pipeline.add_module(module_after_agg)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
 
         aggregate_runtime_module = runtime.modules[1]
         assert aggregate_runtime_module.name == 'aggregate'
 
-        runtime.run()
-        runtime.run()
+        await runtime.run()
+        await runtime.run()
         assert aggregate_runtime_module.state_size == 2
         assert aggregate_runtime_module.state == ['state', 'state']
 
-        results = runtime.process()
+        results = await runtime.process()
 
         assert 'after_agg' in results
         assert len(results['after_agg']) == 4
         assert results['after_agg'] == ['state', 'state', 'state', 'state']
 
-    def test_pipeline_set_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_set_parameters(self):
         parameters = {'param1': 1}
         module = MockModule('MockName').set_parameters(parameters)
         self.pipeline.add_module(module)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
         module_runtime = runtime.modules[0]
 
         assert len(module_runtime.parameters) == 1
         assert 'param1' in module_runtime.parameters
 
-    def test_pipeline_runtime_readonly_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_runtime_readonly_parameters(self):
         parameters = {'param1': 1}
         module = MockModule('MockName').set_parameters(parameters)
         self.pipeline.add_module(module)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
         module_runtime = runtime.modules[0]
 
         with pytest.raises(AttributeError):
             module_runtime.parameters = {}
 
-    def test_pipeline_parameters_available_in_run(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_parameters_available_in_run(self):
         @finalize
         class ModuleWithParams(Module.Runtime):
             def run(self, **kwargs):
@@ -470,19 +489,22 @@ class TestSequentialPipeline:
         module = ModuleWithParams('module_with_params').expose_result().set_parameters(parameters)
 
         self.pipeline.add_module(module)
-        results = self.pipeline.build().run()
+        runtime = await self.pipeline.build()
+        results = await runtime.run()
 
         assert 'module_with_params' in results
         assert results['module_with_params'] == parameters
 
-    def test_pipeline_shared_parameters_available_in_runtime(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_shared_parameters_available_in_runtime(self):
         shared_parameters = {'shared_param1': 1}
-        runtime = self.pipeline.build(shared_parameters=shared_parameters)
+        runtime = await self.pipeline.build(shared_parameters=shared_parameters)
 
         assert len(runtime.shared_parameters) == 1
         assert runtime.shared_parameters == shared_parameters
 
-    def test_pipeline_same_shared_parameters_in_modules(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_same_shared_parameters_in_modules(self):
         @finalize
         class ModuleWithParams(Module.Runtime):
             def run(self, **kwargs):
@@ -502,29 +524,34 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_other)
 
         shared_parameters = {'shared_param1': 1}
-        results = self.pipeline.build(shared_parameters=shared_parameters).run()
+        runtime = await self.pipeline.build(shared_parameters=shared_parameters)
+        results = await runtime.run()
 
         assert len(results) == 2
         assert 'module_with_params' in results
         assert 'module_with_params_other' in results
         assert results['module_with_params'] == results['module_with_params_other']
 
-    def test_pipeline_build_run_with_defaults(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_build_run_with_defaults(self):
         module = MockModule('mock_name').expose_result()
         self.pipeline.add_module(module)
-        results = self.pipeline.build().run()
+        runtime = await self.pipeline.build()
+        results = await runtime.run()
 
         assert 'mock_name' in results
         assert results['mock_name'] == 'output'
 
-    def test_pipeline_with_groups(self):
+    @pytest.mark.asyncio
+    async def test_pipeline_with_groups(self):
         self.pipeline.add_module(MockModule('m1', group='g1'))
         self.pipeline.add_module(MockModule('m2').depends_on(self.pipeline.get_module('m1')))
 
         with pytest.warns(UserWarning):
-            runtime = self.pipeline.build(MockContext())
+            await self.pipeline.build(MockContext())
 
-    def test_close_pipeline(self):
+    @pytest.mark.asyncio
+    async def test_close_pipeline(self):
         @accept(self=True)
         @finalize
         class TestModule(Module.Runtime):
@@ -548,16 +575,16 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_2)
         self.pipeline.add_module(module_3)
 
-        runtime = self.pipeline.build()
+        runtime = await self.pipeline.build()
 
-        runtime.run()
-        runtime.close()
+        await runtime.run()
+        await runtime.close()
 
         assert runtime._is_closed
         assert runtime.modules[0].state == 'closed'
         assert runtime.modules[1].state == 'closed'
         assert runtime.modules[2].state == 'closed'
         with pytest.raises(ClosedPipelineException):
-            runtime.run()
+            await runtime.run()
         with pytest.raises(ClosedPipelineException):
-            runtime.process()
+            await runtime.process()

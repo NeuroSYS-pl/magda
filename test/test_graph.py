@@ -15,7 +15,8 @@ class SkipModule(Module.Runtime):
 
 
 class TestGraph:
-    def test_should_fail_on_not_connected_graph(self):
+    @pytest.mark.asyncio
+    async def test_should_fail_on_not_connected_graph(self):
         builder = SequentialPipeline()
         builder.add_module(SkipModule('A'))
         builder.add_module(
@@ -31,9 +32,10 @@ class TestGraph:
             SkipModule('D')
         )
         with pytest.raises(DisjointGraphException):
-            results = builder.build().run()
+            results = await builder.build()
 
-    def test_should_not_fail_on_graph_without_cycle(self):
+    @pytest.mark.asyncio
+    async def test_should_not_fail_on_graph_without_cycle(self):
         builder = SequentialPipeline()
         builder.add_module(SkipModule('A'))
         builder.add_module(
@@ -48,10 +50,12 @@ class TestGraph:
             SkipModule('D')
             .depends_on(builder.get_module('C'))
         )
-        results = builder.build().run()
-        assert 4 == len(builder.modules)
 
-    def test_should_not_fail_on_branched_graph_without_cycle(self):
+        pipeline = await builder.build()
+        assert 4 == len(pipeline.modules)
+
+    @pytest.mark.asyncio
+    async def test_should_not_fail_on_branched_graph_without_cycle(self):
         builder = SequentialPipeline()
         builder.add_module(SkipModule('A'))
         builder.add_module(
@@ -68,10 +72,11 @@ class TestGraph:
             .depends_on(builder.get_module('C'))
         )
 
-        results = builder.build().run()
-        assert 4 == len(builder.modules)
+        pipeline = await builder.build()
+        assert 4 == len(pipeline.modules)
 
-    def test_should_fail_on_simple_cycle(self):
+    @pytest.mark.asyncio
+    async def test_should_fail_on_simple_cycle(self):
         builder = SequentialPipeline()
         module_a = SkipModule('A')
         module_b = SkipModule('B')
@@ -81,9 +86,10 @@ class TestGraph:
         builder.add_module(module_b)
 
         with pytest.raises(CyclicDependenciesException):
-            results = builder.build().run()
+            await builder.build()
 
-    def test_should_fail_on_long_cycle(self):
+    @pytest.mark.asyncio
+    async def test_should_fail_on_long_cycle(self):
         builder = SequentialPipeline()
         module_a = SkipModule('A')
         module_side_a = SkipModule('side_A')
@@ -120,9 +126,10 @@ class TestGraph:
         builder.add_module(module_side_g)
 
         with pytest.raises(CyclicDependenciesException):
-            results = builder.build().run()
+            await builder.build()
 
-    def test_should_fail_on_multiple_cycles(self):
+    @pytest.mark.asyncio
+    async def test_should_fail_on_multiple_cycles(self):
         builder = SequentialPipeline()
         module_a = SkipModule('A')
         module_side_a = SkipModule('side_A')
@@ -167,4 +174,4 @@ class TestGraph:
         builder.add_module(module_side_g)
 
         with pytest.raises(CyclicDependenciesException):
-            results = builder.build().run()
+            await builder.build()
