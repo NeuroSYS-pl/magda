@@ -1,8 +1,5 @@
 from __future__ import annotations
-
 from typing import List, Set
-
-import ray
 
 from magda.module.module import Module
 from magda.pipeline.base import BasePipeline
@@ -39,12 +36,9 @@ class ParallelPipeline(BasePipeline):
         if any([m.group is None for m in self.modules]):
             raise Exception('At least one module does not have a group property')
 
-        context_ref = ray.put(context)
-        shared_parameters_ref = ray.put(shared_parameters)
-
         self._mark_and_validate_modules(modules=self.modules)
         runtime_modules = [
-            module.build(context_ref, shared_parameters_ref)
+            module.build(context, shared_parameters)
             for module in self.modules
         ]
 
@@ -85,7 +79,7 @@ class ParallelPipeline(BasePipeline):
             await runtime_group.bootstrap()
             runtime_groups.append(runtime_group)
 
-        return Runtime(runtime_groups, context_ref, shared_parameters_ref)
+        return Runtime(runtime_groups, context, shared_parameters)
 
     @staticmethod
     def _exclude_own_modules(module_dependencies, modules):

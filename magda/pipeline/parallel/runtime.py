@@ -24,11 +24,11 @@ class Runtime(BasePipeline.Runtime):
 
     @property
     def context(self):
-        return ray.get(super().context)
+        return super().context
 
     @property
     def shared_parameters(self):
-        return ray.get(super().shared_parameters)
+        return super().shared_parameters
 
     @property
     def modules(self) -> List[Module.Runtime]:

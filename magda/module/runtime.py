@@ -34,10 +34,6 @@ class ModuleRuntime(BaseModuleRuntime):
         self._parameters = parameters
 
     async def _on_bootstrap(self):
-        if isinstance(self._context, ray.ObjectRef):
-            self._context = await self._context
-        if isinstance(self._shared_parameters, ray.ObjectRef):
-            self._shared_parameters = await self._shared_parameters
         if callable(self._context):
             self._context = self._context()
 
