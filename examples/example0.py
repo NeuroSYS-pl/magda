@@ -1,15 +1,15 @@
 import asyncio
 from time import time
 
-from magda.pipeline import SequentialPipeline
+from magda.pipeline.sequential import SequentialPipeline
 
-from examples.interfaces.common import Context, Request
+from examples.interfaces.common import Request, Context
 from examples.modules.a import ModuleA
 from examples.modules.b import ModuleB
 from examples.modules.c import ModuleC
 
 
-class ExampleSequential:
+class ExampleSimpleSequential:
     @classmethod
     async def demo(cls):
         example = cls()
@@ -33,28 +33,21 @@ class ExampleSequential:
 
         self.pipeline = await builder.build(lambda: Context(prefix))
 
-    async def run(self, value: str = 'R', n_jobs: int = 3):
-        # Run jobs and measure duration
+    async def run(self):
+        # Run one job and measure duration
         start = time()
-        results = await asyncio.gather(*[
-            asyncio.create_task(
-                self.pipeline.run(Request(value=f'{value}{i}'))
-            )
-            for i in range(n_jobs)
-        ])
+        result = await self.pipeline.run(Request('R'))
         end = time()
 
-        # Close pipeline and teardown modules
+        # Close pipeline (and teardown modules)
         await self.pipeline.close()
 
         # Print results
         print(f'Duration = {end - start:.2f} s')
         print('Results:')
-        for index, result in enumerate(results):
-            print(f' {index}:')
-            for key, value in result.items():
-                print(f'  {key}\t → {value}')
+        for key, value in result.items():
+            print(f'  {key}\t → {value}')
 
 
 if __name__ == "__main__":
-    asyncio.run(ExampleSequential.demo())
+    asyncio.run(ExampleSimpleSequential.demo())

@@ -38,7 +38,7 @@ class ExampleParallelActorPool:
             .expose_result('final')
         )
 
-        self.pipeline = builder.build(lambda: Context(prefix))
+        self.pipeline = await builder.build(lambda: Context(prefix))
 
     async def run(self, value: str = 'R', n_jobs: int = 3):
         # Execute jobs and measure duration
