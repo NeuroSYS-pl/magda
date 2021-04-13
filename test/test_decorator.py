@@ -72,7 +72,8 @@ class TestDecorator:
             class NonModuleClass():
                 pass
 
-    def test_exposing_under_the_same_name(self):
+    @pytest.mark.asyncio
+    async def test_exposing_under_the_same_name(self):
 
         @expose('a')
         @accept(MockModuleA)
@@ -87,4 +88,4 @@ class TestDecorator:
         builder.add_module(MockModuleC('m2'))
 
         with pytest.raises(Exception):
-            pipeline = builder.build()
+            pipeline = await builder.build()

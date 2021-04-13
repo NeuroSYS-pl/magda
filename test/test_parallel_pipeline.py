@@ -1,9 +1,9 @@
 import asyncio
 from time import sleep
-from multiprocessing import Manager
 
 import pytest
 import ray
+from ray.util.queue import Queue
 
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
 from magda.module.module import Module
@@ -38,19 +38,21 @@ class ModuleC(Module.Runtime):
 @accept(self=True)
 @finalize
 class ModuleTestTeardown(Module.Runtime):
-    def bootstrap(self):
-        self.context['ns'].counter += 1
+    async def bootstrap(self):
+        queue: Queue = self.context['up']
+        await queue.put_async(self.name)
 
     def run(self, **kwargs):
         return 'run'
 
-    def teardown(self):
-        self.context['ns'].counter -= 1
+    async def teardown(self):
+        queue: Queue = self.context['down']
+        await queue.put_async(self.name)
 
 
 @pytest.fixture(scope='class')
 def ray_context():
-    ray.init(local_mode=True)
+    ray.init(num_cpus=1)
     yield None
     ray.shutdown()
 
@@ -87,7 +89,7 @@ class TestParallelPipelineSerial:
     async def test_can_create(self, ray_context):
         builder = ParallelPipeline()
         builder.add_module(ModuleA('m1', group='g1'))
-        pipeline = builder.build()
+        pipeline = await builder.build()
         assert isinstance(pipeline, ParallelPipeline.Runtime)
         assert len(pipeline.groups) == 1
         assert set([g.name for g in pipeline.groups]) == set(['g1'])
@@ -97,7 +99,7 @@ class TestParallelPipelineSerial:
         builder = ParallelPipeline()
         builder.add_module(ModuleA('m1', group='g1'))
         builder.add_module(ModuleB('m2', group='g2').depends_on(builder.get_module('m1')))
-        pipeline = builder.build()
+        pipeline = await builder.build()
         assert isinstance(pipeline, ParallelPipeline.Runtime)
         assert len(pipeline.groups) == 2
         assert set([g.name for g in pipeline.groups]) == set(['g1', 'g2'])
@@ -108,7 +110,7 @@ class TestParallelPipelineSerial:
         builder.add_module(ModuleA('m1', group='g1'))
         builder.add_module(ModuleB('m2', group='g2').depends_on(builder.get_module('m1')))
         builder.add_module(ModuleC('m3', group='g3').depends_on(builder.get_module('m2')))
-        pipeline = builder.build()
+        pipeline = await builder.build()
         assert isinstance(pipeline, ParallelPipeline.Runtime)
         assert len(pipeline.groups) == 3
         assert set([g.name for g in pipeline.groups]) == set(['g1', 'g2', 'g3'])
@@ -127,7 +129,7 @@ class TestParallelPipelineSerial:
         builder.add_module(ModuleC('m3', group='g3').depends_on(builder.get_module('m2')))
         builder.add_group(builder.Group('g4'))
         with pytest.raises(Exception):
-            pipeline = builder.build()
+            await builder.build()
 
     @pytest.mark.parametrize('modules', [
         [ModuleB('m2')],
@@ -142,7 +144,7 @@ class TestParallelPipelineSerial:
         for module in modules:
             builder.add_module(module)
         with pytest.raises(Exception):
-            pipeline = builder.build()
+            await builder.build()
 
     @pytest.mark.parametrize('modules', [
         ModuleParameters.single_module_group(),
@@ -155,7 +157,7 @@ class TestParallelPipelineSerial:
         builder = ParallelPipeline()
         for module in modules:
             builder.add_module(module)
-        pipeline = builder.build()
+        pipeline = await builder.build()
 
         names = set([m.name for m in modules])
         pipeline_names = set([m.name for m in pipeline.modules])
@@ -186,7 +188,7 @@ class TestParallelPipelineSerial:
 
         builder = ParallelPipeline()
         builder.add_module(ModuleWithContext('m1', group='g1'))
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
         assert pipeline.context == context
         results = await pipeline.run()
         assert results[tag] == context
@@ -205,7 +207,7 @@ class TestParallelPipelineSerial:
 
         builder = ParallelPipeline()
         builder.add_module(ModuleWithSharedParams('m1', group='g1'))
-        pipeline = builder.build(context, shared_parameters)
+        pipeline = await builder.build(context, shared_parameters)
         assert pipeline.shared_parameters == shared_parameters
         results = await pipeline.run()
         assert results[tag] == shared_parameters
@@ -223,7 +225,8 @@ class TestParallelPipelineSerial:
 
         builder = ParallelPipeline()
         builder.add_module(MockModule('m1', group='g1'))
-        results = await builder.build().run()
+        pipeline = await builder.build()
+        results = await pipeline.run()
 
         assert 'output_tag' in results
         assert results['output_tag'] == 'output_result'
@@ -245,7 +248,7 @@ class TestParallelPipeline:
             .depends_on(builder.get_module('m1'))
             .expose_result('final')
         )
-        pipeline = builder.build()
+        pipeline = await builder.build()
         result = await pipeline.run('R1')
         assert result['final'] == 'R1:C'
 
@@ -268,7 +271,7 @@ class TestParallelPipeline:
             .depends_on(builder.get_module('m1'))
             .expose_result('final')
         )
-        pipeline = builder.build()
+        pipeline = await builder.build()
         result = await pipeline.run('R1')
         assert result['final'] == 'R1:C'
 
@@ -287,7 +290,7 @@ class TestParallelPipeline:
             .depends_on(builder.get_module('m1'))
             .expose_result('final')
         )
-        pipeline = builder.build()
+        pipeline = await builder.build()
         results = await asyncio.gather(
             asyncio.create_task(pipeline.run('R1')),
             asyncio.create_task(pipeline.run('R2')),
@@ -297,7 +300,7 @@ class TestParallelPipeline:
         assert outputs == set(['R1:C', 'R2:C', 'R3:C'])
 
     @pytest.mark.asyncio
-    async def test_close_pipeline(self):
+    async def test_close_pipeline(self, ray_context):
         # m1:g1 ----------> \
         # m2:g2 -> m3:g2 -> m4:g3
         builder = ParallelPipeline()
@@ -314,18 +317,17 @@ class TestParallelPipeline:
             .expose_result('final')
         )
 
-        manager = Manager()
-        ns = manager.Namespace()
-        ns.counter = 0
-
-        pipeline = builder.build(dict(ns=ns))
-        assert(ns.counter == len(pipeline.modules))
+        up, down = Queue(), Queue()
+        pipeline = await builder.build(dict(up=up, down=down))
+        assert(up.size() == len(pipeline.modules))
+        assert(down.size() == 0)
 
         await pipeline.run()
         await pipeline.close()
-
         assert pipeline.closed
-        assert(ns.counter == 0)
+        assert(up.size() == len(pipeline.modules))
+        assert(down.size() == len(pipeline.modules))
+
         with pytest.raises(ClosedPipelineException):
             await pipeline.run()
         with pytest.raises(ClosedPipelineException):
@@ -384,7 +386,7 @@ class TestStatefulParallelPipeline:
             .expose_result('final')
         )
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         r1 = await pipeline.run('R1')
         r2 = await pipeline.run('R2')
         agg1 = await pipeline.process('A1')
@@ -412,7 +414,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleAgg('m6', group='g3').depends_on(builder.get_module('m5')))
         builder.add_module(self.ModuleC('m7', group='g3').depends_on(builder.get_module('m6')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         res = await pipeline.run('R1')
         agg = await pipeline.process('A1')
 
@@ -437,7 +439,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleAgg('m6', group='g4').depends_on(builder.get_module('m5')))
         builder.add_module(self.ModuleC('m7', group='g4').depends_on(builder.get_module('m6')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         await pipeline.run('R1')
         res = await pipeline.run('R2')
         agg = await pipeline.process('A1')
@@ -465,7 +467,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m7', group='g4').depends_on(builder.get_module('m6')))
         builder.add_module(self.ModuleC('m8', group='g4').depends_on(builder.get_module('m7')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         await pipeline.run('R1')
         await pipeline.run('R2')
         agg = await pipeline.process('A1')
@@ -497,7 +499,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m8', group='g4').depends_on(builder.get_module('agg7')))
         builder.add_module(self.ModuleC('m9', group='g4').depends_on(builder.get_module('m8')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         await pipeline.run('R1')
         await pipeline.run('R2')
         res = await pipeline.run('R3')
@@ -541,7 +543,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleB('m12', group='g6').depends_on(builder.get_module('m6')))
         builder.add_module(self.ModuleB('m13', group='g6').depends_on(builder.get_module('m12')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         res1 = await pipeline.run('R1')
         agg1 = await pipeline.process('A1')
         res2 = await pipeline.run('R2')
@@ -571,7 +573,7 @@ class TestStatefulParallelPipeline:
         )
 
         with pytest.raises(Exception):
-            pipeline = builder.build()
+            await builder.build()
 
     @pytest.mark.asyncio
     async def test_stateful_pipeline_with_only_nonregular_modules(self, ray_context):
@@ -580,7 +582,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m2', group='g1').depends_on(builder.get_module('m1')))
         builder.add_module(self.ModuleC('m3', group='g2').depends_on(builder.get_module('m1')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         res = await pipeline.run('R1')
         agg = await pipeline.process('A1')
 
@@ -596,7 +598,7 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m2', group='g1').depends_on(builder.get_module('m1')))
         builder.add_module(self.ModuleC('m3', group='g2').depends_on(builder.get_module('m2')))
 
-        pipeline = builder.build()
+        pipeline = await builder.build()
         res = await pipeline.run('R1')
         agg = await pipeline.process('A1')
 

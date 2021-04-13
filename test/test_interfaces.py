@@ -52,16 +52,19 @@ class TestInterfaces:
 
         return os.path.join(__location__, 'test_configs', config_name)
 
-    def test_can_build_pipeline_with_module_accepting_interface(self):
+    @pytest.mark.asyncio
+    async def test_can_build_pipeline_with_module_accepting_interface(self):
         @accept(MockCorrectInterface)
         @finalize
         class ModuleSample(Module.Runtime):
             def run(self, *args, **kwargs):
                 pass
+
         module = ModuleSample('mock')
         builder = SequentialPipeline()
         builder.add_module(module)
-        pipeline = builder.build()
+
+        pipeline = await builder.build()
         assert isinstance(pipeline, SequentialPipeline.Runtime)
 
     def test_cannot_register_interfaces(self):
@@ -122,7 +125,8 @@ class TestInterfaces:
         assert issubclass(ModuleSample._ancestors[0], MockCorrectInterface)
         assert issubclass(ModuleSample._ancestors[1], ModuleClassSample)
 
-    def test_cannot_read_config_with_wrong_all_submodules_interfaces(self):
+    @pytest.mark.asyncio
+    async def test_cannot_read_config_with_wrong_all_submodules_interfaces(self):
         @accept(MockCorrectDependingInterface)
         @finalize
         class ModuleSample(Module.Runtime):
@@ -133,9 +137,10 @@ class TestInterfaces:
         config_file = self.get_config_file('depending_modules_of_invalid_interface.yaml')
         with open(config_file) as config:
             with pytest.raises(Exception):
-                pipeline = ConfigReader.read(config, ModuleFactory)
+                await ConfigReader.read(config, ModuleFactory)
 
-    def test_cannot_read_config_with_wrong_single_submodule_interface(self):
+    @pytest.mark.asyncio
+    async def test_cannot_read_config_with_wrong_single_submodule_interface(self):
         @accept(MockCorrectDependingInterface)
         @finalize
         class ModuleSample(Module.Runtime):
@@ -146,9 +151,10 @@ class TestInterfaces:
         config_file = self.get_config_file('depending_modules_partially_invalid_interface.yaml')
         with open(config_file) as config:
             with pytest.raises(Exception):
-                pipeline = ConfigReader.read(config, ModuleFactory)
+                pipeline = await ConfigReader.read(config, ModuleFactory)
 
-    def test_can_read_config_with_correct_submodule_interfaces(self):
+    @pytest.mark.asyncio
+    async def test_can_read_config_with_correct_submodule_interfaces(self):
         @accept(MockCorrectDependingInterface)
         @finalize
         class ModuleSample(Module.Runtime):
@@ -158,7 +164,7 @@ class TestInterfaces:
         ModuleFactory.register('ModuleSample', ModuleSample)
         config_file = self.get_config_file('depending_modules_of_correct_interface.yaml')
         with open(config_file) as config:
-            pipeline = ConfigReader.read(config, ModuleFactory)
+            pipeline = await ConfigReader.read(config, ModuleFactory)
 
         assert 3 == len(pipeline.modules)
         assert issubclass(pipeline.modules[0].interface, MockCorrectDependingInterface)

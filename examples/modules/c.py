@@ -3,7 +3,8 @@ from time import sleep
 from magda.module import Module
 from magda.decorators import register, accept, expose, finalize, produce
 
-from examples.modules.common import logger
+from examples.modules.common import log
+from examples.interfaces.common import Context
 from examples.interfaces.string import StringInterface
 
 
@@ -13,8 +14,11 @@ from examples.interfaces.string import StringInterface
 @register('C')
 @finalize
 class ModuleC(Module.Runtime):
-    @logger
-    def run(self, data: Module.ResultSet, *args, **kwargs):
+    async def run(self, data: Module.ResultSet, *args, **kwargs):
+        # Mark module's start
+        ctx: Context = self.context
+        log(self, ctx.timer, '- Start')
+
         # Access strings (results) from the previous modules
         src = [t.data for t in data.of(StringInterface)]
 
@@ -22,6 +26,9 @@ class ModuleC(Module.Runtime):
         #   delay duration is taken from optional parameter `sleep`
         #   and is 2 seconds by default (if the parameter is not provided)
         sleep(self.parameters.get('sleep', 2))
+
+        # Mark module's end
+        log(self, ctx.timer, '- End')
 
         # Build output string and produce declared interface
         return StringInterface(

@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import asyncio
 from typing import Optional
 
 import ray
@@ -33,14 +33,14 @@ class ModuleRuntime(BaseModuleRuntime):
         self._is_regular_module = is_regular_module
         self._parameters = parameters
 
-    def _on_bootstrap(self):
-        if isinstance(self._context, ray.ObjectRef):
-            self._context = ray.get(self._context)
-        if isinstance(self._shared_parameters, ray.ObjectRef):
-            self._shared_parameters = ray.get(self._shared_parameters)
+    async def _on_bootstrap(self):
         if callable(self._context):
             self._context = self._context()
-        self.bootstrap()
+
+        if asyncio.iscoroutinefunction(self.bootstrap):
+            await self.bootstrap()
+        else:
+            self.bootstrap()
 
     def bootstrap(self):
         """ Bootstrap module on target device """

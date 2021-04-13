@@ -25,7 +25,7 @@ class MockModuleReturningContext(Module.Runtime):
 
 @pytest.fixture(scope='class')
 def ray_context():
-    ray.init(local_mode=True)
+    ray.init(num_cpus=1)
     yield None
     ray.shutdown()
 
@@ -69,18 +69,21 @@ class TestContext:
     ]
 
     @pytest.mark.parametrize('context', noncallable_contexts)
-    def test_should_accept_noncallable_context(self, context):
+    @pytest.mark.asyncio
+    async def test_should_accept_noncallable_context(self, context):
         builder = SequentialPipeline()
         m1 = MockModule('m1')
         m2 = MockModuleReturningContext('m2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context == context
         assert pipeline.modules[0].context == context
         assert pipeline.modules[0].context == pipeline.modules[1].context
-        assert pipeline.run()['m2'] == context
+
+        results = await pipeline.run()
+        assert results['m2'] == context
 
     @pytest.mark.parametrize('context', noncallable_contexts)
     @pytest.mark.asyncio
@@ -90,7 +93,7 @@ class TestContext:
         m2 = MockModuleReturningContext('m2', group='g2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context == context
         assert pipeline.modules[0].context == pipeline.modules[1].context
@@ -98,19 +101,22 @@ class TestContext:
         assert results['m2'] == context
 
     @pytest.mark.parametrize('context,param', object_contexts)
-    def test_object_context(self, context, param):
+    @pytest.mark.asyncio
+    async def test_object_context(self, context, param):
         builder = SequentialPipeline()
         m1 = MockModule('m1')
         m2 = MockModuleReturningContext('m2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context == context
         assert pipeline.modules[0].context == context
         assert pipeline.modules[0].context == pipeline.modules[1].context
         assert pipeline.modules[0].context.param == param
-        assert pipeline.run()['m2'] == context
+
+        results = await pipeline.run()
+        assert results['m2'] == context
 
     @pytest.mark.parametrize('context,param', object_contexts)
     @pytest.mark.asyncio
@@ -120,24 +126,27 @@ class TestContext:
         m2 = MockModuleReturningContext('m2', group='g2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context.param == param
         results = await pipeline.run()
         assert results['m2'].param == param
 
     @pytest.mark.parametrize('context,context_type', callable_contexts)
-    def test_callable_context(self, context, context_type):
+    @pytest.mark.asyncio
+    async def test_callable_context(self, context, context_type):
         builder = SequentialPipeline()
         m1 = MockModule('m1')
         m2 = MockModuleReturningContext('m2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context == context
         assert isinstance(pipeline.modules[0].context, context_type)
-        assert isinstance(pipeline.run()['m2'], context_type)
+
+        results = await pipeline.run()
+        assert isinstance(results['m2'], context_type)
 
     @pytest.mark.parametrize('context,context_type', callable_contexts)
     @pytest.mark.asyncio
@@ -147,7 +156,7 @@ class TestContext:
         m2 = MockModuleReturningContext('m2', group='g2').depends_on(m1)
         builder.add_module(m1)
         builder.add_module(m2)
-        pipeline = builder.build(context)
+        pipeline = await builder.build(context)
 
         assert pipeline.context == context
         results = await pipeline.run()

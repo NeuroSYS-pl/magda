@@ -10,10 +10,10 @@ from magda.exceptions import ClosedPipelineException
 
 
 class SequentialPipeline(BasePipeline):
-    """ Synchronous processing pipeline """
+    """ Sequential processing pipeline """
 
     class Runtime(BasePipeline.Runtime):
-        """ Synchronous pipeline runner """
+        """ Sequential pipeline runner """
         def __init__(self, graph: Graph, context=None, shared_parameters=None):
             super().__init__(context, shared_parameters)
             self.graph = graph
@@ -27,20 +27,20 @@ class SequentialPipeline(BasePipeline):
         def closed(self) -> bool:
             return self._is_closed
 
-        def close(self):
+        async def close(self):
             self._is_closed = True
-            self.graph.teardown()
+            await self.graph.teardown()
 
-        def run(self, request=None, is_regular_runtime=True) -> Dict[str, Module.Result]:
+        async def run(self, request=None, is_regular_runtime=True) -> Dict[str, Module.Result]:
             if self._is_closed:
                 raise ClosedPipelineException()
-            results = self.graph.run(request=request, is_regular_runtime=is_regular_runtime)
+            results = await self.graph.run(request=request, is_regular_runtime=is_regular_runtime)
             return self.parse_results(results)
 
-        def process(self, request=None) -> Dict[str, Module.Result]:
-            return self.run(request=request, is_regular_runtime=False)
+        async def process(self, request=None) -> Dict[str, Module.Result]:
+            return await self.run(request=request, is_regular_runtime=False)
 
-    def build(self, context=None, shared_parameters=None) -> SequentialPipeline.Runtime:
+    async def build(self, context=None, shared_parameters=None) -> SequentialPipeline.Runtime:
         self.validate()
         if any([m.group is not None for m in self.modules]):
             msg = ', '.join([
@@ -55,6 +55,7 @@ class SequentialPipeline(BasePipeline):
         modules = [module.build(context, shared_parameters) for module in self.modules]
 
         graph = Graph(modules)
+        await graph.bootstrap()
         return self.Runtime(graph, context, shared_parameters)
 
     def _mark_and_validate_modules(self, modules):

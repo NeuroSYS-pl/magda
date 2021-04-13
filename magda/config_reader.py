@@ -17,7 +17,7 @@ class ConfigReader:
         parameters: Dict[str, Any] = field(default=None)
 
     @classmethod
-    def read(
+    async def read(
         cls,
         config: str,
         module_factory: ModuleFactory,
@@ -49,7 +49,9 @@ class ConfigReader:
                         f"Module '{dependent_mod_name}' hasn't been defined in the config file, "
                         "whereas it's used as a dependency."
                     )
-        return pipeline.build(context, shared_parameters)
+
+        runtime = await pipeline.build(context, shared_parameters)
+        return runtime
 
     @staticmethod
     def _extract_information_from_yaml(parsed_yaml, shared_parameters):
