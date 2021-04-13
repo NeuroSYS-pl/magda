@@ -21,14 +21,11 @@ class Actor:
         await self.graph.bootstrap()
 
     async def run(self, job_id: UUID, request, results=[], is_regular_runtime=True):
+        result = await self.graph.run(request, results, is_regular_runtime)
         return FutureResult(
             job=job_id,
             group=self.name,
-            result=await self.graph.run(
-                request,
-                results,
-                is_regular_runtime=is_regular_runtime,
-            ),
+            result=result,
         )
 
     async def teardown(self):

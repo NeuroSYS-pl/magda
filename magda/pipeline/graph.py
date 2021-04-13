@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional
 
 from magda.module.module import Module
 
@@ -111,7 +111,7 @@ class Graph:
 
     def _should_be_run(
         self,
-        module: Type[Module.Runtime],
+        module: Module.Runtime,
         is_regular_runtime: bool,
     ) -> bool:
         if is_regular_runtime:
@@ -121,7 +121,7 @@ class Graph:
 
     def _exposed_result(
         self,
-        module: Type[Module.Runtime],
+        module: Module.Runtime,
         is_regular_runtime: bool,
     ) -> Optional[str]:
         if is_regular_runtime and issubclass(type(module), Module.Aggregate):
@@ -131,7 +131,7 @@ class Graph:
 
     async def _run_method_helper(
         self,
-        module: Type[Module.Runtime],
+        module: Module.Runtime,
         data: Module.ResultSet,
         request: Any,
         is_regular_runtime: bool,
