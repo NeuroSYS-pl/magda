@@ -1,10 +1,14 @@
 import yaml
+import re
+import warnings
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
+from numbers import Number
 
 from magda.module.factory import ModuleFactory
 from magda.pipeline.sequential import SequentialPipeline
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
+from magda.exceptions import WrongParameterStructureException, ParametrizationException
 
 
 class ConfigReader:
@@ -21,10 +25,20 @@ class ConfigReader:
         cls,
         config: str,
         module_factory: ModuleFactory,
+        config_parameters: Optional[Dict] = None,
         context: Optional[Any] = None,
-        shared_parameters: Optional[Dict] = None,
+        shared_parameters: Optional[Dict] = None
     ):
+        if config_parameters:
+            cls._validate_config_parameters_structure(config_parameters)
+
+            with open(config, 'r') as config_file:
+                config = config_file.read()
+
+            config = cls._substitute_parameters(config, config_parameters)
+
         parsed_yaml = yaml.safe_load(config)
+
         modules, shared_parameters, group_options = \
             cls._extract_information_from_yaml(parsed_yaml, shared_parameters)
 
@@ -52,6 +66,49 @@ class ConfigReader:
 
         runtime = await pipeline.build(context, shared_parameters)
         return runtime
+
+    @staticmethod
+    def _substitute_parameters(config_str, config_parameters):
+        variables = list(set(re.findall(r'\${\w*}', config_str)))
+        variable_names_dict = {variable[2:-1]: variable for variable in variables}
+        config_variables = list(config_parameters.keys())
+
+        for declared_var in variable_names_dict.keys():
+            if declared_var not in config_variables:
+                raise ParametrizationException(
+                    f"Config file containes a declared variable"
+                    " that was not specified in parameters: {declared_var}"
+                )
+
+        for config_var in config_variables:
+            if config_var not in variable_names_dict.keys():
+                warnings.warn(
+                    f"Parameters contain an additional "
+                    "variable that is not used in config file: {config_var}"
+                )
+            else:
+                config_str = config_str.replace(
+                    variable_names_dict[config_var],
+                    str(config_parameters[config_var])
+                )
+
+        return config_str
+
+    @staticmethod
+    def _validate_config_parameters_structure(config_parameters):
+        if not isinstance(config_parameters, Dict):
+            raise WrongParameterStructureException(
+                "Configuration parameters should be passed in a dictionary"
+            )
+        for key, value in config_parameters.items():
+            if not isinstance(key, (str, Number)):
+                raise WrongParameterStructureException(
+                    f"Configuration parameters contains a key that is not alphanumeric: {key}."
+                )
+            if not isinstance(value, (str, Number)):
+                raise WrongParameterStructureException(
+                    f"Configuration parameters contains a value that is not alphanumeric: {value}."
+                )
 
     @staticmethod
     def _extract_information_from_yaml(parsed_yaml, shared_parameters):

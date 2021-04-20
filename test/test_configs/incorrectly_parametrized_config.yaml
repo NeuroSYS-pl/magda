@@ -1,0 +1,12 @@
+modules:
+  - name: mod2
+    type: ModuleDependingCorrect
+
+  - name: mod1
+    type: ModuleDependingCorrect
+
+  - name: mod0
+    type: ModuleSample
+    depends_on:
+      - mod1
+      - mod2
