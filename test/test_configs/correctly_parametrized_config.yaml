@@ -13,3 +13,11 @@ modules:
     parameters:
       threshold : ${THRESHOLD}
       threshold2 : ${THRESHOLD}
+
+shared_parameters:
+  threshold: ${THRESHOLD}
+
+groups:
+  - name: ${group_name}
+    options:
+      replicas: 3

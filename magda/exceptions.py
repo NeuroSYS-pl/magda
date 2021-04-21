@@ -13,11 +13,16 @@ class ClosedPipelineException(Exception):
         super().__init__('The pipeline was closed and cannot be run')
 
 
-class WrongParameterStructureException(Exception):
+class WrongParametersStructureException(Exception):
     def __init__(self, message):
         super().__init__(message)
 
 
-class ParametrizationException(Exception):
+class WrongParameterValueException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class ConfiguartionFileException(Exception):
     def __init__(self, message):
         super().__init__(message)

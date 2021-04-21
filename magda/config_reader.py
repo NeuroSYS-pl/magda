@@ -8,7 +8,8 @@ from numbers import Number
 from magda.module.factory import ModuleFactory
 from magda.pipeline.sequential import SequentialPipeline
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
-from magda.exceptions import WrongParameterStructureException, ParametrizationException
+from magda.exceptions import WrongParametersStructureException, \
+    WrongParameterValueException, ConfiguartionFileException
 
 
 class ConfigReader:
@@ -31,11 +32,9 @@ class ConfigReader:
     ):
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
-
-            with open(config, 'r') as config_file:
-                config = config_file.read()
-
             config = cls._substitute_parameters(config, config_parameters)
+        else:
+            warnings.warn('No config parameters passed to ConfigReader.')
 
         parsed_yaml = yaml.safe_load(config)
 
@@ -69,27 +68,31 @@ class ConfigReader:
 
     @staticmethod
     def _substitute_parameters(config_str, config_parameters):
-        variables = list(set(re.findall(r'\${\w*}', config_str)))
-        variable_names_dict = {variable[2:-1]: variable for variable in variables}
-        config_variables = list(config_parameters.keys())
+        declared_variables = list(set(re.findall(r'\${\w*}', config_str)))
+        declared_variables_names_dict = {
+            variable[2:-1]: variable
+            for variable in declared_variables
+        }
 
-        for declared_var in variable_names_dict.keys():
-            if declared_var not in config_variables:
-                raise ParametrizationException(
-                    f"Config file containes a declared variable"
-                    " that was not specified in parameters: {declared_var}"
+        parameters_variables = config_parameters.keys()
+
+        for declared_var in declared_variables_names_dict.keys():
+            if declared_var not in parameters_variables:
+                raise ConfiguartionFileException(
+                    "Config file containes a declared variable "
+                    f"that was not specified in parameters: {declared_var}"
                 )
 
-        for config_var in config_variables:
-            if config_var not in variable_names_dict.keys():
+        for parameters_var in parameters_variables:
+            if parameters_var not in declared_variables_names_dict.keys():
                 warnings.warn(
-                    f"Parameters contain an additional "
-                    "variable that is not used in config file: {config_var}"
+                    "Parameters contain an additional "
+                    f"variable that is not used in config file: {parameters_var}"
                 )
             else:
                 config_str = config_str.replace(
-                    variable_names_dict[config_var],
-                    str(config_parameters[config_var])
+                    declared_variables_names_dict[parameters_var],
+                    str(config_parameters[parameters_var])
                 )
 
         return config_str
@@ -97,17 +100,19 @@ class ConfigReader:
     @staticmethod
     def _validate_config_parameters_structure(config_parameters):
         if not isinstance(config_parameters, Dict):
-            raise WrongParameterStructureException(
-                "Configuration parameters should be passed in a dictionary"
+            raise WrongParametersStructureException(
+                "Configuration parameters should be passed in a dictionary."
             )
         for key, value in config_parameters.items():
-            if not isinstance(key, (str, Number)):
-                raise WrongParameterStructureException(
-                    f"Configuration parameters contains a key that is not alphanumeric: {key}."
+            if not re.match(r'^[a-zA-Z0-9_]+$', str(key)):
+                raise WrongParameterValueException(
+                    "Configuration parameters keys should contain "
+                    f"only alphanumeric chars and underscores. Found: {key}."
                 )
             if not isinstance(value, (str, Number)):
-                raise WrongParameterStructureException(
-                    f"Configuration parameters contains a value that is not alphanumeric: {value}."
+                raise WrongParameterValueException(
+                    "Configuration parameters values should be of "
+                    f"string or numeric type. Found value: {value}."
                 )
 
     @staticmethod

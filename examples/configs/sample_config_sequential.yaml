@@ -1,0 +1,20 @@
+modules:
+    - name: m1
+      type: ModuleC
+  
+    - name: m2
+      type: ModuleD
+      parameters:
+        threshold: ${THRESHOLD_1}
+  
+    - name: m3
+      type: ModuleD
+      parameters:
+        threshold: ${THRESHOLD_2}
+      depends_on:
+        - m2
+    - name: m4
+      type: ModuleA
+      depends_on:
+        - m3
+        - m1
