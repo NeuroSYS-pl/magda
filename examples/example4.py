@@ -1,6 +1,6 @@
-import os
 import asyncio
 from time import time
+from pathlib import Path
 
 from magda.module.factory import ModuleFactory
 from magda.config_reader import ConfigReader
@@ -19,10 +19,7 @@ class ExampleSimpleSequentialConfigReader:
         await example.run()
 
     def get_config_file(self, config_name):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname(__file__))
-        )
-        return os.path.join(__location__, 'configs', config_name)
+        return Path(__file__).parent / 'configs' / config_name
 
     async def build(self, prefix: str = '{CTX}'):
         ModuleFactory.register('ModuleA', ModuleA)
@@ -35,7 +32,7 @@ class ExampleSimpleSequentialConfigReader:
             self.pipeline = await ConfigReader.read(
                 config,
                 ModuleFactory,
-                {'THRESHOLD_1': 0.2, 'THRESHOLD_2': 0.2},
+                {'THRESHOLD_1': 0.2, 'THRESHOLD_2': 0.5},
                 context=lambda: Context(prefix)
             )
 

@@ -1,5 +1,5 @@
-import os
 import pytest
+from pathlib import Path
 
 from magda.module.module import Module
 from magda.module.factory import ModuleFactory
@@ -46,11 +46,7 @@ class TestInterfaces:
         ModuleFactory.unregister()
 
     def get_config_file(self, config_name):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname(__file__))
-        )
-
-        return os.path.join(__location__, 'test_configs', config_name)
+        return Path(__file__).parent / 'test_configs' / config_name
 
     @pytest.mark.asyncio
     async def test_can_build_pipeline_with_module_accepting_interface(self):

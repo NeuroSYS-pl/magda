@@ -18,7 +18,7 @@ class ModuleD(Module.Runtime):
     def bootstrap(self):
         ctx: Context = self.context
         log(self, ctx.timer, '--- Created!')
-        log(self, ctx.timer, self.parameters['threshold'])
+        log(self, ctx.timer, f"- Threshold = {self.parameters['threshold']}")
 
     def teardown(self):
         ctx: Context = self.context

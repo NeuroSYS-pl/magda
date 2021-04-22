@@ -8,8 +8,8 @@ from numbers import Number
 from magda.module.factory import ModuleFactory
 from magda.pipeline.sequential import SequentialPipeline
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
-from magda.exceptions import WrongParametersStructureException, \
-    WrongParameterValueException, ConfiguartionFileException
+from magda.exceptions import (WrongParametersStructureException,
+                              WrongParameterValueException, ConfiguartionFileException)
 
 
 class ConfigReader:

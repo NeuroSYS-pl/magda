@@ -1,19 +1,16 @@
-import os
 import pytest
+from pathlib import Path
 
 from magda.module.module import Module
 from magda.module.factory import ModuleFactory
-from magda.module.interface import ModuleInterface
 from magda.pipeline.sequential import SequentialPipeline
 from magda.config_reader import ConfigReader
-from magda.decorators import finalize
-from magda.decorators.accepting import accept
-from magda.decorators.producing import produce
-from magda.exceptions import WrongParametersStructureException, \
-    WrongParameterValueException, ConfiguartionFileException
+from magda.decorators import finalize, accept, produce
+from magda.exceptions import (WrongParametersStructureException,
+                              WrongParameterValueException, ConfiguartionFileException)
 
 
-class MockCorrectDependingInterface(ModuleInterface):
+class MockCorrectDependingInterface(Module.Interface):
     pass
 
 
@@ -33,11 +30,7 @@ class TestConfigReader:
         ModuleFactory.unregister()
 
     def get_config_file(self, config_name):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname(__file__))
-        )
-
-        return os.path.join(__location__, 'test_configs', config_name)
+        return Path(__file__).parent / 'test_configs' / config_name
 
     @pytest.mark.asyncio
     async def test_should_not_read_config_parameters_with_nested_structure(self):
@@ -105,8 +98,8 @@ class TestConfigReader:
         assert pipeline.modules[2].input_modules == ['mod1', 'mod2']
 
     @pytest.mark.asyncio
-    async def test_should_not_pass_with_redundant_variables_in_config(self):
-        config_file_with_redundant_vars = self.get_config_file(
+    async def test_should_not_pass_with_excessive_variables_in_config(self):
+        config_file_with_excessive_vars = self.get_config_file(
             'incorrectly_parametrized_config.yaml'
         )
 
@@ -116,7 +109,7 @@ class TestConfigReader:
             'THRESHOLD': 0.2
         }
 
-        with open(config_file_with_redundant_vars) as config:
+        with open(config_file_with_excessive_vars) as config:
             config = config.read()
             with pytest.raises(ConfiguartionFileException):
                 await ConfigReader.read(

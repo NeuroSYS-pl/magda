@@ -12,6 +12,7 @@ modules:
     group: g2
     depends_on:
       - m2
+
   - name: m4
     type: ModuleA
     group: ${GROUP_M4}

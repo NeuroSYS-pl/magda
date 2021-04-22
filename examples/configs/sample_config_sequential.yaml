@@ -13,6 +13,7 @@ modules:
         threshold: ${THRESHOLD_2}
       depends_on:
         - m2
+
     - name: m4
       type: ModuleA
       depends_on:
