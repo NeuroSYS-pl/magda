@@ -1,5 +1,5 @@
-import os
 import pytest
+from pathlib import Path
 
 from magda.module.module import Module
 from magda.module.factory import ModuleFactory
@@ -46,11 +46,7 @@ class TestInterfaces:
         ModuleFactory.unregister()
 
     def get_config_file(self, config_name):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname(__file__))
-        )
-
-        return os.path.join(__location__, 'test_configs', config_name)
+        return Path(__file__).parent / 'test_configs' / config_name
 
     @pytest.mark.asyncio
     async def test_can_build_pipeline_with_module_accepting_interface(self):
@@ -136,6 +132,7 @@ class TestInterfaces:
 
         config_file = self.get_config_file('depending_modules_of_invalid_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(Exception):
                 await ConfigReader.read(config, ModuleFactory)
 
@@ -150,6 +147,7 @@ class TestInterfaces:
 
         config_file = self.get_config_file('depending_modules_partially_invalid_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(Exception):
                 pipeline = await ConfigReader.read(config, ModuleFactory)
 
@@ -164,6 +162,7 @@ class TestInterfaces:
         ModuleFactory.register('ModuleSample', ModuleSample)
         config_file = self.get_config_file('depending_modules_of_correct_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
         assert 3 == len(pipeline.modules)

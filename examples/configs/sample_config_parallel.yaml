@@ -1,0 +1,21 @@
+modules:
+  - name: m1
+    type: ModuleC
+    group: ${GROUP_M1}
+
+  - name: m2
+    type: ModuleB
+    group: g2
+
+  - name: m3
+    type: ModuleB
+    group: g2
+    depends_on:
+      - m2
+
+  - name: m4
+    type: ModuleA
+    group: ${GROUP_M4}
+    depends_on:
+      - m3
+      - m1

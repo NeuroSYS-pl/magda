@@ -11,3 +11,15 @@ class DisjointGraphException(Exception):
 class ClosedPipelineException(Exception):
     def __init__(self):
         super().__init__('The pipeline was closed and cannot be run')
+
+
+class WrongParametersStructureException(Exception):
+    pass
+
+
+class WrongParameterValueException(Exception):
+    pass
+
+
+class ConfiguartionFileException(Exception):
+    pass

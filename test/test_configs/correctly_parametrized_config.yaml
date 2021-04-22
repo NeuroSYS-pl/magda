@@ -1,0 +1,23 @@
+modules:
+  - name: ${NAME_2}
+    type: DependingModule
+
+  - name: mod1
+    type: ${TYPE_1}
+
+  - name: mod0
+    type: ModuleSample
+    depends_on:
+      - mod1
+      - mod2
+    parameters:
+      threshold : ${THRESHOLD}
+      threshold2 : ${THRESHOLD}
+
+shared_parameters:
+  threshold: ${THRESHOLD}
+
+groups:
+  - name: ${group_name}
+    options:
+      replicas: 3
