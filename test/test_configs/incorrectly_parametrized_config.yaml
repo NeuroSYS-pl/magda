@@ -1,9 +1,9 @@
 modules:
   - name: ${NAME_2}
-    type: ModuleDependingCorrect
+    type: ModuleSample
 
   - name: mod1
-    type: ${TYPE_1}
+    type: ModuleSample
 
   - name: mod0
     type: ModuleSample

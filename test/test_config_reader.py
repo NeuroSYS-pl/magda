@@ -10,24 +10,11 @@ from magda.exceptions import (WrongParametersStructureException,
                               WrongParameterValueException, ConfiguartionFileException)
 
 
-class MockCorrectDependingInterface(Module.Interface):
+class MockTestInterface(Module.Interface):
     pass
 
 
 class TestConfigReader:
-
-    def setup_method(self, method):
-        @produce(MockCorrectDependingInterface)
-        @finalize
-        class ModuleDependingCorrect(Module.Runtime):
-            def run(self, *args, **kwargs):
-                pass
-
-        ModuleFactory.unregister()
-        ModuleFactory.register('ModuleDependingCorrect', ModuleDependingCorrect)
-
-    def teardown_method(self, method):
-        ModuleFactory.unregister()
 
     def get_config_file(self, config_name):
         return Path(__file__).parent / 'test_configs' / config_name
@@ -38,6 +25,7 @@ class TestConfigReader:
         incorrect_parameters = {'ARG1': 'correct', 'ARG2': {'ARG3': 'incorrect'}}
 
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(WrongParameterValueException):
                 await ConfigReader.read(config, ModuleFactory, incorrect_parameters)
 
@@ -45,8 +33,9 @@ class TestConfigReader:
     async def test_should_not_read_config_parameters_with_incorrect_values(self):
         config_file = self.get_config_file('depending_modules_of_correct_interface.yaml')
 
-        incorrect_parameters = {'ARG1': 'correct', 'ARG2': MockCorrectDependingInterface}
+        incorrect_parameters = {'ARG1': 'correct', 'ARG2': MockTestInterface}
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(WrongParameterValueException):
                 await ConfigReader.read(config, ModuleFactory, incorrect_parameters)
 
@@ -56,6 +45,7 @@ class TestConfigReader:
 
         incorrect_parameters = [{'ARG1': 'value1'}, {'ARG2': 'value2'}]
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(WrongParametersStructureException):
                 await ConfigReader.read(config, ModuleFactory, incorrect_parameters)
 
@@ -63,7 +53,7 @@ class TestConfigReader:
     async def test_should_not_read_config_parameters_with_wrong_dict_keys(self):
         config_file = self.get_config_file('depending_modules_of_correct_interface.yaml')
 
-        incorrect_parameters = {MockCorrectDependingInterface: 'value1', 2: 'value2'}
+        incorrect_parameters = {MockTestInterface: 'value1', 2: 'value2'}
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
@@ -71,17 +61,25 @@ class TestConfigReader:
 
     @pytest.mark.asyncio
     async def test_should_pass_with_correct_variables_in_config(self):
-        @accept(MockCorrectDependingInterface)
+
+        @produce(MockTestInterface)
+        @finalize
+        class DependingModule(Module.Runtime):
+            def run(self, *args, **kwargs):
+                pass
+
+        @accept(MockTestInterface)
         @finalize
         class ModuleSample(Module.Runtime):
             pass
 
         ModuleFactory.register('ModuleSample', ModuleSample)
+        ModuleFactory.register('DependingModule', DependingModule)
 
         config_file = self.get_config_file('correctly_parametrized_config.yaml')
 
         correct_parameters = {
-            'TYPE_1': 'ModuleDependingCorrect',
+            'TYPE_1': 'DependingModule',
             'NAME_2': 'mod2',
             'THRESHOLD': 0.2,
             'BIAS': 0.1,
@@ -93,8 +91,8 @@ class TestConfigReader:
             pipeline = await ConfigReader.read(config, ModuleFactory, correct_parameters)
 
         assert 3 == len(pipeline.modules)
-        assert issubclass(pipeline.modules[0].interface, MockCorrectDependingInterface)
-        assert issubclass(pipeline.modules[1].interface, MockCorrectDependingInterface)
+        assert issubclass(pipeline.modules[0].interface, MockTestInterface)
+        assert issubclass(pipeline.modules[1].interface, MockTestInterface)
         assert pipeline.modules[2].input_modules == ['mod1', 'mod2']
 
     @pytest.mark.asyncio
@@ -104,7 +102,6 @@ class TestConfigReader:
         )
 
         correct_parameters = {
-            'TYPE_1': 'ModuleDependingCorrect',
             'NAME_2': 'mod2',
             'THRESHOLD': 0.2
         }

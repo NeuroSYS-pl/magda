@@ -132,6 +132,7 @@ class TestInterfaces:
 
         config_file = self.get_config_file('depending_modules_of_invalid_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(Exception):
                 await ConfigReader.read(config, ModuleFactory)
 
@@ -146,6 +147,7 @@ class TestInterfaces:
 
         config_file = self.get_config_file('depending_modules_partially_invalid_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             with pytest.raises(Exception):
                 pipeline = await ConfigReader.read(config, ModuleFactory)
 
@@ -160,6 +162,7 @@ class TestInterfaces:
         ModuleFactory.register('ModuleSample', ModuleSample)
         config_file = self.get_config_file('depending_modules_of_correct_interface.yaml')
         with open(config_file) as config:
+            config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
         assert 3 == len(pipeline.modules)

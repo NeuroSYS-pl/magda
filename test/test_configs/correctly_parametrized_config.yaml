@@ -1,6 +1,6 @@
 modules:
   - name: ${NAME_2}
-    type: ModuleDependingCorrect
+    type: DependingModule
 
   - name: mod1
     type: ${TYPE_1}

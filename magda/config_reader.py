@@ -30,11 +30,11 @@ class ConfigReader:
         context: Optional[Any] = None,
         shared_parameters: Optional[Dict] = None
     ):
+
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
-            config = cls._substitute_parameters(config, config_parameters)
-        else:
-            warnings.warn('No config parameters passed to ConfigReader.')
+
+        config = cls._check_and_substitute_declared_variables(config, config_parameters)
 
         parsed_yaml = yaml.safe_load(config)
 
@@ -67,33 +67,44 @@ class ConfigReader:
         return runtime
 
     @staticmethod
-    def _substitute_parameters(config_str, config_parameters):
-        declared_variables = list(set(re.findall(r'\${\w*}', config_str)))
-        declared_variables_names_dict = {
-            variable[2:-1]: variable
-            for variable in declared_variables
-        }
+    def _check_and_substitute_declared_variables(config_str, config_parameters):
+        declared_variables = list(set(re.findall(r'\${(\w+)}', config_str)))
 
-        parameters_variables = config_parameters.keys()
+        if declared_variables:
 
-        for declared_var in declared_variables_names_dict.keys():
-            if declared_var not in parameters_variables:
+            if not config_parameters:
                 raise ConfiguartionFileException(
-                    "Config file containes a declared variable "
-                    f"that was not specified in parameters: {declared_var}"
+                    "Config file contains declared variables and"
+                    f"no config parameters were passed. Found variables: {declared_variables}"
                 )
 
-        for parameters_var in parameters_variables:
-            if parameters_var not in declared_variables_names_dict.keys():
-                warnings.warn(
-                    "Parameters contain an additional "
-                    f"variable that is not used in config file: {parameters_var}"
-                )
             else:
-                config_str = config_str.replace(
-                    declared_variables_names_dict[parameters_var],
-                    str(config_parameters[parameters_var])
-                )
+                parameters_variables = config_parameters.keys()
+
+                unlinked_variables = [
+                    declared_var
+                    for declared_var in declared_variables
+                    if declared_var not in parameters_variables
+                ]
+
+                if unlinked_variables:
+                    raise ConfiguartionFileException(
+                        "Config file contains declared variables "
+                        "that were not specified in parameters."
+                        f" Found unlinked variables {unlinked_variables}"
+                    )
+
+                for parameters_var in parameters_variables:
+                    if parameters_var not in declared_variables:
+                        warnings.warn(
+                            "Parameters contain an additional "
+                            f"variable that is not used in config file: {parameters_var}"
+                        )
+                    else:
+                        config_str = config_str.replace(
+                            f"${{{parameters_var}}}",
+                            str(config_parameters[parameters_var])
+                        )
 
         return config_str
 
@@ -104,7 +115,7 @@ class ConfigReader:
                 "Configuration parameters should be passed in a dictionary."
             )
         for key, value in config_parameters.items():
-            if not re.match(r'^[a-zA-Z0-9_]+$', str(key)):
+            if not re.match(r'^\w+$', str(key)):
                 raise WrongParameterValueException(
                     "Configuration parameters keys should contain "
                     f"only alphanumeric chars and underscores. Found: {key}."
