@@ -4,7 +4,6 @@ from time import sleep
 from magda.module import Module
 from magda.decorators import register, accept, finalize, produce
 
-from examples.modules.common import log
 from examples.interfaces.common import Request, Context
 from examples.interfaces.string import StringInterface
 from examples.interfaces.fn import LambdaInterface
@@ -19,20 +18,17 @@ class ModuleA(Module.Runtime):
 
     def bootstrap(self):
         ctx: Context = self.context
-        log(self, ctx.timer, '--- Created!')
+        self.log(f'Context.timer = {ctx.timer}')
 
     async def teardown(self):
         ctx: Context = self.context
-        log(self, ctx.timer, '--- Long...!')
+        self.log(f'Long... | Context.timer = {ctx.timer}')
         await asyncio.sleep(1)
-        log(self, ctx.timer, '--- ...Teardown!')
+        self.log(f'...Teardown | Context.timer = {ctx.timer}')
 
     def run(self, data: Module.ResultSet, request: Request):
         # Access context
         ctx: Context = self.context
-
-        # Mark module's start
-        log(self, ctx.timer, '- Start')
 
         # Access results from the previous modules
         #   `src` is a list of strings
@@ -41,9 +37,6 @@ class ModuleA(Module.Runtime):
 
         # Some heavy computational operations for example
         sleep(self.SLEEP_TIME)
-
-        # Mark module's end
-        log(self, ctx.timer, '- End')
 
         # Produce declared interface
         return StringInterface(

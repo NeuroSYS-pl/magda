@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Any, List, Optional
 
 from magda.module.module import Module
+from magda.utils.logger import MagdaLogger
 
 
 class Graph:
@@ -61,8 +62,9 @@ class Graph:
         def _get_module(self, module_name):
             return next((mod for mod in self.modules if mod.name == module_name), None)
 
-    def __init__(self, modules: List[Module.Runtime]):
+    def __init__(self, modules: List[Module.Runtime], logger: MagdaLogger):
         self._modules = self.TopologicalSorter(modules).get()
+        self._logger = logger
 
     @property
     def modules(self) -> List[Module.Runtime]:
@@ -70,9 +72,10 @@ class Graph:
 
     async def run(
         self,
-        request: Any,
+        request,
         results: List[Module.Result] = [],
-        is_regular_runtime: bool = True,
+        is_regular_runtime=True,
+        state_type=None,
     ) -> List[Module.Result]:
         """ Main method for running regular modules in the pipeline
 
@@ -84,6 +87,7 @@ class Graph:
         for module in self._modules:
             if self._should_be_run(module=module, is_regular_runtime=is_regular_runtime):
                 data = Module.ResultSet([r for r in results if r.name in module.input_modules])
+                module.log('START', request=request, event=True)
                 module_result = await self._run_method_helper(
                     module, data, request, is_regular_runtime
                 )
@@ -100,10 +104,12 @@ class Graph:
 
     async def bootstrap(self) -> None:
         for module in self._modules:
+            module.log('BOOTSTRAP', event=True)
             await module._on_bootstrap()
 
     async def teardown(self):
         for module in self._modules:
+            module.log('TEARDOWN', event=True)
             if asyncio.iscoroutinefunction(module.teardown):
                 await module.teardown()
             else:

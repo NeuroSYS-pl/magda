@@ -4,6 +4,7 @@ with open('README.md', 'r') as f:
     long_description = f.read()
 
 dependencies = [
+    'colorama>=0.4,<1',
     'pyyaml>=5.3.1,<6',
     'ray>=1.2.0,<2',
 ]

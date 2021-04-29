@@ -22,8 +22,10 @@ class ModuleRuntime(BaseModuleRuntime):
         context,
         shared_parameters,
         is_regular_module,
+        logger,
+        parent,
     ):
-        super().__init__(name, group)
+        super().__init__(name, group, logger, parent)
         self._input_modules = input_modules
         self._output_modules = output_modules
         self._exposed = exposed

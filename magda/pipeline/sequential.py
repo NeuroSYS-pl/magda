@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from warnings import warn
-from typing import List, Dict
+from weakref import ref
+from typing import List, Dict, Optional
 
 from magda.pipeline.base import BasePipeline
 from magda.pipeline.graph import Graph
 from magda.module.module import Module
 from magda.exceptions import ClosedPipelineException
+from magda.utils.logger import MagdaLogger
 
 
 class SequentialPipeline(BasePipeline):
@@ -14,8 +16,8 @@ class SequentialPipeline(BasePipeline):
 
     class Runtime(BasePipeline.Runtime):
         """ Sequential pipeline runner """
-        def __init__(self, graph: Graph, context=None, shared_parameters=None):
-            super().__init__(context, shared_parameters)
+        def __init__(self, *, graph: Graph, **kwargs):
+            super().__init__(**kwargs)
             self.graph = graph
             self._is_closed = False
 
@@ -40,7 +42,15 @@ class SequentialPipeline(BasePipeline):
         async def process(self, request=None) -> Dict[str, Module.Result]:
             return await self.run(request=request, is_regular_runtime=False)
 
-    async def build(self, context=None, shared_parameters=None) -> SequentialPipeline.Runtime:
+    async def build(
+        self,
+        context=None,
+        shared_parameters=None,
+        *,
+        logger: Optional[MagdaLogger] = None,
+    ) -> SequentialPipeline.Runtime:
+        logger = logger if logger is not None else MagdaLogger.get_default()
+
         self.validate()
         if any([m.group is not None for m in self.modules]):
             msg = ', '.join([
@@ -49,14 +59,27 @@ class SequentialPipeline(BasePipeline):
                 if m.group is not None
             ])
             warn(f'The property "group" for modules: ${msg} will be ignored!')
-
         self._mark_and_validate_modules(modules=self.modules)
 
-        modules = [module.build(context, shared_parameters) for module in self.modules]
+        modules = [
+            module.build(
+                logger=logger,
+                parent=ref(self),
+                context=context,
+                shared_parameters=shared_parameters
+            )
+            for module in self.modules
+        ]
 
-        graph = Graph(modules)
+        graph = Graph(modules, logger=logger)
         await graph.bootstrap()
-        return self.Runtime(graph, context, shared_parameters)
+        return self.Runtime(
+            graph=graph,
+            name=self.name,
+            context=context,
+            shared_parameters=shared_parameters,
+            logger=logger,
+        )
 
     def _mark_and_validate_modules(self, modules):
         aggregate_modules = self._find_aggregate_modules(modules)
