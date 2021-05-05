@@ -103,7 +103,7 @@ class Graph:
                 )
         return results
 
-    def attach_logger(self, logger: MagdaLogger.Facade) -> None:
+    def attach_logger(self, logger: MagdaLogger) -> None:
         self._logger = logger
 
     async def bootstrap(self) -> None:
@@ -147,7 +147,7 @@ class Graph:
         data: Module.ResultSet,
         request: Any,
         is_regular_runtime: bool,
-        logger: MagdaLogger.Facade,
+        logger: MagdaLogger,
     ) -> Any:
         module_result = None
         props = dict(

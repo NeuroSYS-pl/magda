@@ -17,11 +17,11 @@ from examples.interfaces.fn import LambdaInterface
 class ModuleA(Module.Runtime):
     SLEEP_TIME = 2
 
-    def bootstrap(self, logger: MagdaLogger.Facade):
+    def bootstrap(self, logger: MagdaLogger):
         ctx: Context = self.context
         logger.info(f'Context.timer = {ctx.timer}')
 
-    async def teardown(self, logger: MagdaLogger.Facade):
+    async def teardown(self, logger: MagdaLogger):
         ctx: Context = self.context
         logger.info(f'Long... | Context.timer = {ctx.timer}')
         await asyncio.sleep(1)

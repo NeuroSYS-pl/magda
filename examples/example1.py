@@ -39,7 +39,7 @@ class ExampleSequential:
 
         self.pipeline = await builder.build(
             context=lambda: Context(prefix),
-            logger=MagdaLogger(),
+            logger=MagdaLogger.Config(),
         )
 
     async def run(self, value: str = 'R', n_jobs: int = 3):

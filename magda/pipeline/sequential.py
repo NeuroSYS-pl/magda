@@ -16,11 +16,11 @@ class SequentialPipeline(BasePipeline):
 
     class Runtime(BasePipeline.Runtime):
         """ Sequential pipeline runner """
-        def __init__(self, *, graph: Graph, logger: MagdaLogger, **kwargs):
+        def __init__(self, *, graph: Graph, logger_config: MagdaLogger.Config, **kwargs):
             super().__init__(**kwargs)
             self.graph = graph
             self._is_closed = False
-            self._logger = MagdaLogger.Facade.of(logger, pipeline=ref(self))
+            self._logger = MagdaLogger.of(logger_config, pipeline=ref(self))
 
         @property
         def modules(self) -> List[Module]:
@@ -52,10 +52,8 @@ class SequentialPipeline(BasePipeline):
         context=None,
         shared_parameters=None,
         *,
-        logger: Optional[MagdaLogger] = None,
+        logger: Optional[MagdaLogger.Config] = None,
     ) -> SequentialPipeline.Runtime:
-        logger = logger if logger is not None else MagdaLogger.get_default()
-
         self.validate()
         if any([m.group is not None for m in self.modules]):
             msg = ', '.join([
@@ -77,7 +75,7 @@ class SequentialPipeline(BasePipeline):
             name=self.name,
             context=context,
             shared_parameters=shared_parameters,
-            logger=logger,
+            logger_config=logger,
         )
         await runtime._bootstrap()
         return runtime
