@@ -16,10 +16,11 @@ class SequentialPipeline(BasePipeline):
 
     class Runtime(BasePipeline.Runtime):
         """ Sequential pipeline runner """
-        def __init__(self, *, graph: Graph, **kwargs):
+        def __init__(self, *, graph: Graph, logger: MagdaLogger, **kwargs):
             super().__init__(**kwargs)
             self.graph = graph
             self._is_closed = False
+            self._logger = MagdaLogger.Facade.of(logger, pipeline=ref(self))
 
         @property
         def modules(self) -> List[Module]:
@@ -28,6 +29,10 @@ class SequentialPipeline(BasePipeline):
         @property
         def closed(self) -> bool:
             return self._is_closed
+
+        async def _bootstrap(self):
+            self.graph.attach_logger(self._logger)
+            await self.graph.bootstrap()
 
         async def close(self):
             self._is_closed = True
@@ -62,24 +67,20 @@ class SequentialPipeline(BasePipeline):
         self._mark_and_validate_modules(modules=self.modules)
 
         modules = [
-            module.build(
-                logger=logger,
-                parent=ref(self),
-                context=context,
-                shared_parameters=shared_parameters
-            )
+            module.build(context=context, shared_parameters=shared_parameters)
             for module in self.modules
         ]
+        graph = Graph(modules)
 
-        graph = Graph(modules, logger=logger)
-        await graph.bootstrap()
-        return self.Runtime(
+        runtime = self.Runtime(
             graph=graph,
             name=self.name,
             context=context,
             shared_parameters=shared_parameters,
             logger=logger,
         )
+        await runtime._bootstrap()
+        return runtime
 
     def _mark_and_validate_modules(self, modules):
         aggregate_modules = self._find_aggregate_modules(modules)

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Any, List, Optional, TYPE_CHECKING, Type
+from functools import partial
+from logging import getLogger
+from typing import Any, Callable, List, Optional, TYPE_CHECKING, Type
+from weakref import ReferenceType
 
 from colorama import Fore, Style
 from datetime import datetime
@@ -20,6 +23,29 @@ class MagdaLogger:
         GROUP = auto()
         REQUEST = auto()
         MESSAGE = auto()
+
+    class Facade:
+        def __init__(self, callback: Optional[Callable[[str, Any], None]]) -> None:
+            self._callback = callback
+
+        def info(self, msg: str) -> None:
+            if self._callback:
+                self._callback(msg=msg, is_event=False)
+
+        def event(self, msg: str) -> None:
+            if self._callback:
+                self._callback(msg=msg, is_event=True)
+
+        @classmethod
+        def of(cls, logger: MagdaLogger, *args, **kwargs) -> MagdaLogger.Facade:
+            return cls(partial(logger._prepare_message, *args, **kwargs))
+
+        def chain(self, *args, **kwargs) -> MagdaLogger.Facade:
+            return (
+                MagdaLogger.Facade(partial(self._callback, *args, **kwargs))
+                if self._callback is not None
+                else MagdaLogger.Facade()
+            )
 
     @classmethod
     def get_default(cls: Type[MagdaLogger]) -> MagdaLogger:
@@ -50,11 +76,17 @@ class MagdaLogger:
         self,
         *,
         msg: str,
-        pipeline: Optional[Type[BasePipeline.Runtime]] = None,
-        module: Optional[Type[BaseModuleRuntime]] = None,
+        pipeline: Optional[ReferenceType[BasePipeline.Runtime]] = None,
+        module: Optional[ReferenceType[BaseModuleRuntime]] = None,
         request: Optional[Any] = None,
         is_event: bool = False,
     ) -> str:
+        if not self.enable or (not self.log_events and is_event):
+            return
+
+        pipeline_ref = pipeline() if pipeline is not None else None
+        module_ref = module() if module is not None else None
+
         parts = {
             MagdaLogger.RecordParts.TIMESTAMP: (
                 Fore.YELLOW
@@ -62,24 +94,22 @@ class MagdaLogger:
                 + Fore.RESET
             ),
             MagdaLogger.RecordParts.PIPELINE: (
-                Fore.MAGENTA + f'{pipeline.__class__.__name__} '
-                + Style.BRIGHT + f'({pipeline.name})'
+                Fore.MAGENTA + f'{pipeline_ref.__class__.__name__} '
+                + Style.BRIGHT + f'({pipeline_ref.name})'
                 + Fore.RESET + Style.NORMAL
-            ) if pipeline is not None else None,
+            ) if pipeline_ref is not None else None,
             MagdaLogger.RecordParts.MODULE: (
-                Fore.BLUE + f'{module.__class__.__name__} '
-                + Style.BRIGHT + f'({module.name})'
+                Fore.BLUE + f'{module_ref.__class__.__name__} '
+                + Style.BRIGHT + f'({module_ref.name})'
                 + Fore.RESET + Style.NORMAL
-            ) if module is not None else None,
+            ) if module_ref is not None else None,
             MagdaLogger.RecordParts.GROUP: (
                 Fore.CYAN + Style.BRIGHT
-                + f'<{module.group}>'
+                + f'<{module_ref.group}>'
                 + Fore.RESET + Style.NORMAL
-            ) if module is not None and module.group is not None else None,
+            ) if module_ref is not None and module_ref.group is not None else None,
             MagdaLogger.RecordParts.REQUEST: (
-                Style.BRIGHT + Fore.MAGENTA
-                + f'[{str(request)}]'
-                + Fore.RESET + Style.NORMAL
+                Fore.MAGENTA + f'[{str(request)}]' + Fore.RESET
             ) if request is not None else None,
             MagdaLogger.RecordParts.MESSAGE: (
                 (Style.BRIGHT + Fore.GREEN + f'[{msg}]' + Fore.RESET + Style.NORMAL)
@@ -87,8 +117,13 @@ class MagdaLogger:
             ),
         }
 
-        return ' '.join([
+        message = ' '.join([
             parts[key]
             for key in self.format
             if parts[key] is not None
         ])
+
+        if self.use_print:
+            print(message)
+        else:
+            getLogger('magda.runtime').info(message)

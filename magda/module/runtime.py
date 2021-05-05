@@ -1,11 +1,10 @@
 from __future__ import annotations
+
 import asyncio
 from typing import Optional
 
-import ray
-
 from magda.module.base import BaseModuleRuntime
-from magda.module.results import ResultSet, Result
+from magda.utils.logger import MagdaLogger
 
 
 class ModuleRuntime(BaseModuleRuntime):
@@ -22,10 +21,8 @@ class ModuleRuntime(BaseModuleRuntime):
         context,
         shared_parameters,
         is_regular_module,
-        logger,
-        parent,
     ):
-        super().__init__(name, group, logger, parent)
+        super().__init__(name, group)
         self._input_modules = input_modules
         self._output_modules = output_modules
         self._exposed = exposed
@@ -35,24 +32,24 @@ class ModuleRuntime(BaseModuleRuntime):
         self._is_regular_module = is_regular_module
         self._parameters = parameters
 
-    async def _on_bootstrap(self):
+    async def _on_bootstrap(self, logger: MagdaLogger.Facade):
         if callable(self._context):
             self._context = self._context()
 
         if asyncio.iscoroutinefunction(self.bootstrap):
-            await self.bootstrap()
+            await self.bootstrap(logger=logger)
         else:
-            self.bootstrap()
+            self.bootstrap(logger=logger)
 
-    def bootstrap(self):
+    def bootstrap(self, *args, **kwargs):
         """ Bootstrap module on target device """
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         """ Teardown module on target device """
         pass
 
-    def run(self, data: ResultSet, **kwargs):
+    def run(self, *args, **kwargs):
         """ Request Run """
         raise NotImplementedError
 

@@ -6,7 +6,6 @@ from typing import List, Dict, Any, Optional
 
 from magda.module.module import Module
 from magda.pipeline.graph_validator import GraphValidator
-from magda.utils.logger import MagdaLogger
 
 
 class BasePipelineMeta(ABCMeta):
@@ -26,12 +25,10 @@ class BasePipeline(metaclass=BasePipelineMeta):
             name: str,
             context: Any,
             shared_parameters: Any,
-            logger: MagdaLogger,
         ):
             self._name = name
             self._context = context
             self._shared_parameters = shared_parameters
-            self._logger = logger
 
         def parse_results(self, results: List[Module.Result]) -> Dict[str, Any]:
             return {

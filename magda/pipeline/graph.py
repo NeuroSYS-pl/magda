@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from typing import Any, List, Optional
+from weakref import ref
 
 from magda.module.module import Module
 from magda.utils.logger import MagdaLogger
@@ -62,9 +63,9 @@ class Graph:
         def _get_module(self, module_name):
             return next((mod for mod in self.modules if mod.name == module_name), None)
 
-    def __init__(self, modules: List[Module.Runtime], logger: MagdaLogger):
+    def __init__(self, modules: List[Module.Runtime]):
         self._modules = self.TopologicalSorter(modules).get()
-        self._logger = logger
+        self._logger = None
 
     @property
     def modules(self) -> List[Module.Runtime]:
@@ -75,7 +76,6 @@ class Graph:
         request,
         results: List[Module.Result] = [],
         is_regular_runtime=True,
-        state_type=None,
     ) -> List[Module.Result]:
         """ Main method for running regular modules in the pipeline
 
@@ -87,9 +87,10 @@ class Graph:
         for module in self._modules:
             if self._should_be_run(module=module, is_regular_runtime=is_regular_runtime):
                 data = Module.ResultSet([r for r in results if r.name in module.input_modules])
-                module.log('START', request=request, event=True)
+                logger = self._logger.chain(module=ref(module), request=request)
+                logger.event('START')
                 module_result = await self._run_method_helper(
-                    module, data, request, is_regular_runtime
+                    module, data, request, is_regular_runtime, logger,
                 )
                 results.append(
                     Module.Result(
@@ -102,18 +103,23 @@ class Graph:
                 )
         return results
 
+    def attach_logger(self, logger: MagdaLogger.Facade) -> None:
+        self._logger = logger
+
     async def bootstrap(self) -> None:
         for module in self._modules:
-            module.log('BOOTSTRAP', event=True)
-            await module._on_bootstrap()
+            logger = self._logger.chain(module=ref(module))
+            logger.event('BOOTSTRAP')
+            await module._on_bootstrap(logger=logger)
 
     async def teardown(self):
         for module in self._modules:
-            module.log('TEARDOWN', event=True)
+            logger = self._logger.chain(module=ref(module))
+            logger.event('TEARDOWN')
             if asyncio.iscoroutinefunction(module.teardown):
-                await module.teardown()
+                await module.teardown(logger=logger)
             else:
-                module.teardown()
+                module.teardown(logger=logger)
 
     def _should_be_run(
         self,
@@ -141,25 +147,32 @@ class Graph:
         data: Module.ResultSet,
         request: Any,
         is_regular_runtime: bool,
+        logger: MagdaLogger.Facade,
     ) -> Any:
         module_result = None
+        props = dict(
+            data=data,
+            request=request,
+            logger=logger,
+        )
+
         if issubclass(type(module), Module.Aggregate):
             if is_regular_runtime:
                 if asyncio.iscoroutinefunction(module.aggregate):
-                    await module.aggregate(data=data, request=request)
+                    await module.aggregate(**props)
                 else:
-                    module.aggregate(data=data, request=request)
+                    module.aggregate(**props)
                 module_result = []
             else:
                 module_result = (
-                    await module.process(data=data, request=request)
+                    await module.process(**props)
                     if asyncio.iscoroutinefunction(module.process)
-                    else module.process(data=data, request=request)
+                    else module.process(**props)
                 )
         else:
             module_result = (
-                await module.run(data=data, request=request)
+                await module.run(**props)
                 if asyncio.iscoroutinefunction(module.run)
-                else module.run(data=data, request=request)
+                else module.run(**props)
             )
         return module_result

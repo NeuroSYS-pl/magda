@@ -3,6 +3,7 @@ from time import sleep
 
 from magda.module import Module
 from magda.decorators import register, accept, finalize, produce
+from magda.utils.logger import MagdaLogger
 
 from examples.interfaces.common import Request, Context
 from examples.interfaces.string import StringInterface
@@ -16,17 +17,17 @@ from examples.interfaces.fn import LambdaInterface
 class ModuleA(Module.Runtime):
     SLEEP_TIME = 2
 
-    def bootstrap(self):
+    def bootstrap(self, logger: MagdaLogger.Facade):
         ctx: Context = self.context
-        self.log(f'Context.timer = {ctx.timer}')
+        logger.info(f'Context.timer = {ctx.timer}')
 
-    async def teardown(self):
+    async def teardown(self, logger: MagdaLogger.Facade):
         ctx: Context = self.context
-        self.log(f'Long... | Context.timer = {ctx.timer}')
+        logger.info(f'Long... | Context.timer = {ctx.timer}')
         await asyncio.sleep(1)
-        self.log(f'...Teardown | Context.timer = {ctx.timer}')
+        logger.info(f'...Teardown | Context.timer = {ctx.timer}')
 
-    def run(self, data: Module.ResultSet, request: Request):
+    def run(self, data: Module.ResultSet, request: Request, *args, **kwargs):
         # Access context
         ctx: Context = self.context
 
