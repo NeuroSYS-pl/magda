@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from typing import Any, List, Optional
-from weakref import ref
 
 from magda.module.module import Module
 from magda.utils.logger import MagdaLogger
@@ -87,7 +86,13 @@ class Graph:
         for module in self._modules:
             if self._should_be_run(module=module, is_regular_runtime=is_regular_runtime):
                 data = Module.ResultSet([r for r in results if r.name in module.input_modules])
-                logger = self._logger.chain(module=ref(module), request=request)
+                logger = self._logger.chain(
+                    module=MagdaLogger.Parts.Module(
+                        name=module.name,
+                        kind=module.__class__.__name__,
+                    ),
+                    request=MagdaLogger.Parts.Request(str(request)),
+                )
                 logger.event('START')
                 module_result = await self._run_method_helper(
                     module, data, request, is_regular_runtime, logger,
@@ -103,18 +108,26 @@ class Graph:
                 )
         return results
 
-    def attach_logger(self, logger: MagdaLogger) -> None:
+    async def bootstrap(self, logger: MagdaLogger) -> None:
         self._logger = logger
-
-    async def bootstrap(self) -> None:
         for module in self._modules:
-            logger = self._logger.chain(module=ref(module))
+            logger = self._logger.chain(
+                module=MagdaLogger.Parts.Module(
+                    name=module.name,
+                    kind=module.__class__.__name__,
+                ),
+            )
             logger.event('BOOTSTRAP')
             await module._on_bootstrap(logger=logger)
 
     async def teardown(self):
         for module in self._modules:
-            logger = self._logger.chain(module=ref(module))
+            logger = self._logger.chain(
+                module=MagdaLogger.Parts.Module(
+                    name=module.name,
+                    kind=module.__class__.__name__,
+                ),
+            )
             logger.event('TEARDOWN')
             if asyncio.iscoroutinefunction(module.teardown):
                 await module.teardown(logger=logger)

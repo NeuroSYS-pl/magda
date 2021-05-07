@@ -1,51 +1,18 @@
 from __future__ import annotations
-
-from dataclasses import dataclass, field
-from enum import Enum, auto
 from functools import partial
 from logging import getLogger
-from typing import Any, Callable, List, Optional, TYPE_CHECKING, Type, Union
-from weakref import ReferenceType
+from typing import Any, Callable, Optional, Type
 
 from colorama import Fore, Style
 from datetime import datetime
 
-
-if TYPE_CHECKING:
-    from magda.module.base import BaseModuleRuntime
-    from magda.pipeline.base import BasePipeline
-
-
-def get_default_format() -> List[MagdaLogger.Config.Part]:
-    return [
-        MagdaLogger.Config.Part.TIMESTAMP,
-        MagdaLogger.Config.Part.PIPELINE,
-        MagdaLogger.Config.Part.MODULE,
-        MagdaLogger.Config.Part.GROUP,
-        MagdaLogger.Config.Part.REQUEST,
-        MagdaLogger.Config.Part.MESSAGE,
-    ]
+from magda.utils.logger.config import LoggerConfig
+from magda.utils.logger.parts import LoggerParts
 
 
 class MagdaLogger:
-    @dataclass(frozen=True)
-    class Config:
-        class Part(Enum):
-            TIMESTAMP = auto()
-            PIPELINE = auto()
-            MODULE = auto()
-            GROUP = auto()
-            REQUEST = auto()
-            MESSAGE = auto()
-
-        class Output(Enum):
-            STDOUT = auto()
-            LOGGING = auto()
-
-        enable: bool = True
-        log_events: bool = True
-        output: Union[Output, Callable[[str], None]] = Output.STDOUT
-        format: List[Part] = field(default_factory=get_default_format)
+    Config = LoggerConfig
+    Parts = LoggerParts
 
     @classmethod
     def of(
@@ -80,16 +47,15 @@ class MagdaLogger:
     def _prepare_message(
         msg: str,
         config: MagdaLogger.Config,
-        pipeline: Optional[ReferenceType[BasePipeline.Runtime]] = None,
-        module: Optional[ReferenceType[BaseModuleRuntime]] = None,
-        request: Optional[Any] = None,
+        *,
+        pipeline: Optional[MagdaLogger.Parts.Pipeline] = None,
+        module: Optional[MagdaLogger.Parts.Module] = None,
+        group: Optional[MagdaLogger.Parts.Group] = None,
+        request: Optional[MagdaLogger.Parts.Request] = None,
         is_event: bool = False,
     ) -> str:
         if not config.enable or (not config.log_events and is_event):
             return
-
-        pipeline_ref = pipeline() if pipeline is not None else None
-        module_ref = module() if module is not None else None
 
         parts = {
             MagdaLogger.Config.Part.TIMESTAMP: (
@@ -98,22 +64,22 @@ class MagdaLogger:
                 + Fore.RESET
             ),
             MagdaLogger.Config.Part.PIPELINE: (
-                Fore.MAGENTA + f'{pipeline_ref.__class__.__name__} '
-                + Style.BRIGHT + f'({pipeline_ref.name})'
+                Fore.MAGENTA + f'{pipeline.kind} '
+                + Style.BRIGHT + f'({pipeline.name})'
                 + Fore.RESET + Style.NORMAL
-            ) if pipeline_ref is not None else None,
+            ) if pipeline is not None else None,
             MagdaLogger.Config.Part.MODULE: (
-                Fore.BLUE + f'{module_ref.__class__.__name__} '
-                + Style.BRIGHT + f'({module_ref.name})'
+                Fore.BLUE + f'{module.kind} '
+                + Style.BRIGHT + f'({module.name})'
                 + Fore.RESET + Style.NORMAL
-            ) if module_ref is not None else None,
+            ) if module is not None else None,
             MagdaLogger.Config.Part.GROUP: (
                 Fore.CYAN + Style.BRIGHT
-                + f'<{module_ref.group}>'
+                + f'<{group.name}>'
                 + Fore.RESET + Style.NORMAL
-            ) if module_ref is not None and module_ref.group is not None else None,
+            ) if group is not None else None,
             MagdaLogger.Config.Part.REQUEST: (
-                Fore.MAGENTA + f'[{str(request)}]' + Fore.RESET
+                Fore.MAGENTA + f'[{request.text}]' + Fore.RESET
             ) if request is not None else None,
             MagdaLogger.Config.Part.MESSAGE: (
                 (Style.BRIGHT + Fore.GREEN + f'[{msg}]' + Fore.RESET + Style.NORMAL)

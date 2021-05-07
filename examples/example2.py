@@ -2,6 +2,7 @@ import asyncio
 from time import time
 
 from magda.pipeline.parallel import init, ParallelPipeline
+from magda.utils.logger import MagdaLogger
 
 from examples.interfaces.common import Context, Request
 from examples.modules.a import ModuleA
@@ -20,7 +21,7 @@ class ExampleParallel:
         await example.run()
 
     async def build(self, prefix: str = '{CTX}'):
-        builder = ParallelPipeline()
+        builder = ParallelPipeline(name='Example')
         builder.add_group(ParallelPipeline.Group('g1'))
         builder.add_group(ParallelPipeline.Group('g2'))
         builder.add_group(ParallelPipeline.Group('g3'))
@@ -38,7 +39,10 @@ class ExampleParallel:
             .expose_result('final')
         )
 
-        self.pipeline = await builder.build(lambda: Context(prefix))
+        self.pipeline = await builder.build(
+            context=lambda: Context(prefix),
+            logger=MagdaLogger.Config(),
+        )
 
     async def run(self, value: str = 'R', n_jobs: int = 3):
         # Run jobs and measure duration

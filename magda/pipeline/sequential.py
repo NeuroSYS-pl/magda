@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from warnings import warn
-from weakref import ref
 from typing import List, Dict, Optional
 
 from magda.pipeline.base import BasePipeline
@@ -20,7 +19,13 @@ class SequentialPipeline(BasePipeline):
             super().__init__(**kwargs)
             self.graph = graph
             self._is_closed = False
-            self._logger = MagdaLogger.of(logger_config, pipeline=ref(self))
+            self._logger = MagdaLogger.of(
+                logger_config,
+                pipeline=MagdaLogger.Parts.Pipeline(
+                    name=self.name,
+                    kind='SequentialPipeline',
+                ),
+            )
 
         @property
         def modules(self) -> List[Module]:
@@ -31,8 +36,7 @@ class SequentialPipeline(BasePipeline):
             return self._is_closed
 
         async def _bootstrap(self):
-            self.graph.attach_logger(self._logger)
-            await self.graph.bootstrap()
+            await self.graph.bootstrap(self._logger)
 
         async def close(self):
             self._is_closed = True
