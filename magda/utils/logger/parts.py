@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Optional
 
 
 class LoggerParts:
@@ -11,6 +12,7 @@ class LoggerParts:
     @dataclass(frozen=True)
     class Group:
         name: str
+        replica: Optional[int] = None
 
     @dataclass(frozen=True)
     class Pipeline:

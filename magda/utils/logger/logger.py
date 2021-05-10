@@ -75,9 +75,14 @@ class MagdaLogger:
             ) if module is not None else None,
             MagdaLogger.Config.Part.GROUP: (
                 Fore.CYAN + Style.BRIGHT
-                + f'<{group.name}>'
+                + f'({group.name})'
                 + Fore.RESET + Style.NORMAL
             ) if group is not None else None,
+            MagdaLogger.Config.Part.REPLICA: (
+                Fore.CYAN + Style.BRIGHT
+                + f'({group.replica})'
+                + Fore.RESET + Style.NORMAL
+            ) if (group is not None and group.replica is not None) else None,
             MagdaLogger.Config.Part.REQUEST: (
                 Fore.MAGENTA + f'[{request.text}]' + Fore.RESET
             ) if request is not None else None,

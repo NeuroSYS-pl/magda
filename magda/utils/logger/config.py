@@ -11,6 +11,7 @@ def get_default_format() -> List[LoggerConfig.Part]:
         LoggerConfig.Part.PIPELINE,
         LoggerConfig.Part.MODULE,
         LoggerConfig.Part.GROUP,
+        LoggerConfig.Part.REPLICA,
         LoggerConfig.Part.REQUEST,
         LoggerConfig.Part.MESSAGE,
     ]
@@ -23,6 +24,7 @@ class LoggerConfig:
         PIPELINE = auto()
         MODULE = auto()
         GROUP = auto()
+        REPLICA = auto()
         REQUEST = auto()
         MESSAGE = auto()
 

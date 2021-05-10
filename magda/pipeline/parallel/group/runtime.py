@@ -31,8 +31,13 @@ class GroupRuntime:
         self.dependencies_nonregular = set([m.group for m in dependent_modules_nonregular])
         self.module_dependencies_nonregular = set([m.name for m in dependent_modules_nonregular])
         self.pool = ParallelActorPool([
-            Actor.options(**options).remote(name, state_type, modules)
-            for _ in range(replicas)
+            Actor.options(**options).remote(
+                name=name,
+                index=i if replicas > 1 else None,
+                state_type=state_type,
+                modules=modules,
+            )
+            for i in range(replicas)
         ])
         self._logger = None
 
