@@ -95,7 +95,7 @@ class Module(BaseModule):
         self._exposed = name if name is not None else ''
         return self
 
-    def build(self, *, context, shared_parameters):
+    def build(self, *, context: Any = None, shared_parameters: Any = None):
         return self._derived_class(
             name=self.name,
             group=self.group,

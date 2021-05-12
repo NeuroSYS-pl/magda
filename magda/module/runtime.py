@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 from typing import Optional
 
 from magda.module.base import BaseModuleRuntime
@@ -32,14 +33,36 @@ class ModuleRuntime(BaseModuleRuntime):
         self._is_regular_module = is_regular_module
         self._parameters = parameters
 
-    async def _on_bootstrap(self, logger: MagdaLogger.Facade):
+    async def _on_bootstrap(self, **kwargs):
         if callable(self._context):
             self._context = self._context()
 
+        signature = inspect.signature(self.bootstrap)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
+
         if asyncio.iscoroutinefunction(self.bootstrap):
-            await self.bootstrap(logger=logger)
+            await self.bootstrap(**fn_kwargs)
         else:
-            self.bootstrap(logger=logger)
+            self.bootstrap(**fn_kwargs)
+
+    async def _on_teardown(self, **kwargs):
+        signature = inspect.signature(self.teardown)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
+
+        if asyncio.iscoroutinefunction(self.teardown):
+            await self.teardown(**fn_kwargs)
+        else:
+            self.teardown(**fn_kwargs)
 
     def bootstrap(self, *args, **kwargs):
         """ Bootstrap module on target device """

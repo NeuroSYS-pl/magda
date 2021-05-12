@@ -129,10 +129,7 @@ class Graph:
                 ),
             )
             logger.event('TEARDOWN')
-            if asyncio.iscoroutinefunction(module.teardown):
-                await module.teardown(logger=logger)
-            else:
-                module.teardown(logger=logger)
+            await module._on_teardown(logger=logger)
 
     def _should_be_run(
         self,
