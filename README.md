@@ -31,7 +31,7 @@ pip install https://github.com/NeuroSYS-pl/magda/archive/main.zip
 ## Quickstart
 Having installed *MAGDA*, a simplistic pipeline can be created with just a few lines of code.
 
-<img src="examples/images/pipeline-schema.png" alt="Pipeline schema" style="width:475px;"/>
+<img src="examples/images/pipeline-schema.png" alt="Pipeline schema" width="475px;"/>
 
 The above pipeline is composed of just 2 modules. The first one sums all numbers from a given list and outputs a single number. And the second module raises that number to a given power.
 
@@ -45,7 +45,7 @@ Every pipeline consists of a couple of steps:
 4. Pipeline build
 5. Pipeline run
 
-<img src="examples/images/simple-pipeline.png" alt="Pipeline schema" style="width:450px;"/>
+<img src="examples/images/simple-pipeline.png" alt="Pipeline schema" width="450px;"/>
 
 ```python
 import asyncio
@@ -200,7 +200,7 @@ with open('my_config_file.yaml') as file:
     config = file.read()
     runtime = asyncio.run(ConfigReader.read(config, ModuleFactory))
 
-result = asyncio.run(runtime.run([1, 2, 3]))
+result = asyncio.run(runtime.run(request=[1, 2, 3]))
 print(result['module_power'])
 # output: Power(number=36, power=2)
 ```
