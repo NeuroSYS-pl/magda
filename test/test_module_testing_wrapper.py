@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from magda.testing import ModuleTestingWrapper
 from magda.decorators import accept, produce, finalize
 from magda.module import Module
-from magda.testing.utils import wrap_data_into_resultset, wrap_into_result, wrap_single_object_into_resultset
+from magda.module.results import ResultSet
+from magda.testing import ModuleTestingWrapper
+from magda.testing.utils import wrap_into_result
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,26 @@ class ModuleOnlyData(Module.Runtime):
 
     def run(self, data: Module.ResultSet, **kwargs):
         return ProcessedData(data.get(RawData)[::-1])
+
+
+@accept(RawData, ProcessedData)
+@produce(ProcessedData)
+@finalize
+class ModuleManyDataElements(Module.Runtime):
+    """
+    Module takes 'data' argument which is ResultSet with many elements.
+    """
+    @dataclass
+    class Parameters:
+        param: str
+
+    def bootstrap(self, **kwargs):
+        self.params: self.Parameters = self.Parameters(**self.parameters)
+
+    def run(self, data: Module.ResultSet, **kwargs):
+        text_part_1 = data.get(RawData)[::-1]
+        text_part_2 = data.get(ProcessedData).data
+        return ProcessedData(text_part_1 + '_' + text_part_2)
 
 
 @accept(RawData)
@@ -81,54 +102,93 @@ class ModuleAsync(Module.Runtime):
 
 @pytest.mark.parametrize('module_cls', [ModuleAsync, ModuleSync])
 @pytest.mark.asyncio
-class TestTestingModule:
+class TestModuleTestingWrapper:
+    module_params = {'param': 'value'}
+
     async def test_should_process_correctly(self, module_cls):
-        module = module_cls('my-module-a').set_parameters({'param': 'value'})
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
         mock = await ModuleTestingWrapper(module).build()
 
-        result = await mock.run(data=RawData('xyz'), request={'query': 'query'})
+        result = await mock.data(RawData('xyz')).request({'query': 'query'}).run()
         assert result == ProcessedData('zyx')
 
+    async def test_should_process_correctly_many_data_elements(self, module_cls):
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        mock = await ModuleTestingWrapper(module).build()
+
+        result = await mock.data(RawData('xyz')).request({'query': 'query'}).run()
+        assert result == ProcessedData('zyx')
+
+    async def test_should_correctly_bootstrap(self, module_cls):
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        mock = await ModuleTestingWrapper(module).build()
+        assert mock.module.is_built
+
+    async def test_should_correctly_teardown(self, module_cls):
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        mock = await ModuleTestingWrapper(module).build()
+        await mock.close()
+        assert not mock.module.is_built
+
+    async def test_should_correctly_set_request(self, module_cls):
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        mock = await ModuleTestingWrapper(module).build()
+        request = {'key': 'value'}
+        mock = mock.request(request)
+        assert isinstance(mock, ModuleTestingWrapper)
+        assert mock._request == request
+
+    async def test_should_correctly_set_data(self, module_cls):
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        mock = await ModuleTestingWrapper(module).build()
+        data: RawData = RawData('xyz')
+        mock = mock.data(data)
+
+        assert isinstance(mock, ModuleTestingWrapper)
+        assert isinstance(mock._data, ResultSet)
+        assert mock._data.collection[0].result.data == data.data
+
     async def test_should_not_compile(self, module_cls):
-        module = module_cls('my-module-a').set_parameters({}) # Missing required params
+        module = module_cls('my-module-a').set_parameters({})   # Missing required params
 
         with pytest.raises(TypeError):
             await ModuleTestingWrapper(module).build()
 
-    async def test_should_correctyl_bootstrap(self, module_cls):
-        module = module_cls('my-module-a').set_parameters({'param': 'value'})
-        mock = await ModuleTestingWrapper(module).build()
-        assert mock.module.is_built
-    
-    async def test_should_correctly_teardown(self, module_cls):
-        module = module_cls('my-module-a').set_parameters({'param': 'value'})
-        mock = await ModuleTestingWrapper(module).build()
-        await mock.close()
-        assert not mock.module.is_built
-    
     async def test_should_correctly_pass_shared_parameters(self, module_cls):
-        shared_parameters={'shared_param': 'value'}
-        module = module_cls('my-module-a').set_parameters({'param': 'value'})
+        shared_parameters = {'shared_param': 'value'}
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
         mock = await ModuleTestingWrapper(module).build(shared_parameters=shared_parameters)
         assert mock.module.shared_parameters == shared_parameters
 
     async def test_should_correctly_pass_context(self, module_cls):
         def get_context():
-            return 'callabel context'
+            return 'callable context'
 
-        module = module_cls('my-module-a').set_parameters({'param': 'value'})
+        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
         mock = await ModuleTestingWrapper(module).build(context=get_context)
         assert mock.module.context() == get_context()
 
 
-class TestTestingModuleOnlyData:
+class TestModuleTestingWrapperOnlyData:
     @pytest.mark.asyncio
     async def test_should_process_correctly(self):
         module = ModuleOnlyData('my-module-a').set_parameters({'param': 'value'})
         mock = await ModuleTestingWrapper(module).build()
 
-        result = await mock.run(RawData('xyz'))
+        mock = mock.data(RawData('xyz'))
+        result = await mock.run()
         assert result == ProcessedData('zyx')
+
+
+class TestModuleTestingWrapperManyDataElements:
+    @pytest.mark.asyncio
+    async def test_should_process_correctly(self):
+        module = ModuleManyDataElements('my-module-a').set_parameters({'param': 'value'})
+        mock = await ModuleTestingWrapper(module).build()
+
+        mock = mock.data(RawData('xyz'), ProcessedData('xyz'))
+        result = await mock.run()
+        assert result == ProcessedData('zyx_xyz')
 
 
 class TestWrapIntoResult:
@@ -150,38 +210,3 @@ class TestWrapIntoResult:
     def test_should_fail(self):
         with pytest.raises(TypeError):
             wrap_into_result()
-
-
-class TestWrapDataIntoResultSet:
-    params_names = 'arg_names, args, kwargs'
-    params_pass = [
-        (['request', 'data'], ({'query': 'example_query'}, RawData('xyz')), {}),
-        (['request', 'data'], ({'query': 'example_query'},), {'data': RawData('xyz')}),
-        (['request', 'data'], (RawData('xyz'),), {'request': {'query': 'example_query'}}),
-        (['request', 'data'], tuple(), {'request': {'query': 'example_query'}, 'data': RawData('xyz')}),
-        (['data'], (RawData('xyz'),), {}),
-        (['data'], tuple(), {'data': RawData('xyz')}),
-        (['data'], (RawData('xyz'),), {'request': {'query': 'example_query'}}),
-        (['data'], tuple(), {'request': {'query': 'example_query'}, 'data': RawData('xyz')}),
-        ([], ({'query': 'example_query'},), {'data': RawData('xyz')}),
-        ([], tuple(), {'request': {'query': 'example_query'}, 'data': RawData('xyz')}),
-        (['request'], ({'query': 'example_query'},), {}),
-        (['request'], tuple(), {'request': {'query': 'example_query'}})
-    ]
-
-    @pytest.mark.parametrize(params_names, params_pass)
-    def test_should_pass(self, arg_names, args, kwargs):
-        target_data = RawData('xyz')
-        wrap = wrap_single_object_into_resultset
-        target_args = tuple([arg if arg != target_data else wrap(target_data) for arg in args])
-        target_kwargs = {key: val if val != target_data else wrap(val) for key, val in kwargs.items()}
-        wrapped_args, wrapped_kwargs = wrap_data_into_resultset(arg_names, *args, **kwargs)
-
-        def equals(obj1, obj2):
-            if isinstance(obj1, Module.ResultSet) and isinstance(obj2, Module.ResultSet):
-                return obj1.collection == obj2.collection
-            else:
-                return obj1 == obj2
-        
-        assert all([equals(w, t) for (w, t) in zip(wrapped_args, target_args)])
-        assert all([equals(wrapped_kwargs[key], target_kwargs[key]) for key in target_kwargs.keys()])
