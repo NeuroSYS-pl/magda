@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any, Tuple
 
 import pytest
 
@@ -6,7 +7,6 @@ from magda.decorators import accept, produce, finalize
 from magda.module import Module
 from magda.module.results import ResultSet
 from magda.testing import ModuleTestingWrapper
-from magda.testing.utils import wrap_into_result
 
 
 @dataclass(frozen=True)
@@ -100,6 +100,14 @@ class ModuleAsync(Module.Runtime):
         return super().teardown()
 
 
+def run_mock_sync(self, request, data, **kwargs) -> Tuple[Any, Any]:
+    return request, data
+
+
+async def run_mock_async(self, request, data, **kwargs) -> Tuple[Any, Any]:
+    return request, data
+
+
 @pytest.mark.parametrize('module_cls', [ModuleAsync, ModuleSync])
 @pytest.mark.asyncio
 class TestModuleTestingWrapper:
@@ -143,7 +151,6 @@ class TestModuleTestingWrapper:
         mock = await ModuleTestingWrapper(module).build()
         data: RawData = RawData('xyz')
         mock = mock.data(data)
-
         assert isinstance(mock, ModuleTestingWrapper)
         assert isinstance(mock._data, ResultSet)
         assert mock._data.collection[0].result.data == data.data
@@ -189,24 +196,3 @@ class TestModuleTestingWrapperManyDataElements:
         mock = mock.data(RawData('xyz'), ProcessedData('xyz'))
         result = await mock.run()
         assert result == ProcessedData('zyx_xyz')
-
-
-class TestWrapIntoResult:
-    def test_should_pass(self):
-        data: RawData = RawData('xyz')
-        interface = RawData
-        name = 'raw_data'
-        src_class = ModuleSync
-        expose = 'expose'
-        result: Module.Result = wrap_into_result(data, name, src_class, expose)
-
-        assert isinstance(result, Module.Result)
-        assert result.result == data
-        assert result.interface == interface
-        assert result.name == name
-        assert result.src_class == src_class
-        assert result.expose == expose
-
-    def test_should_fail(self):
-        with pytest.raises(TypeError):
-            wrap_into_result()
