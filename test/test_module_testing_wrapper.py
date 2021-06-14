@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Tuple
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -73,6 +74,8 @@ class ModuleSync(Module.Runtime):
         self.params: self.Parameters = self.Parameters(**self.parameters)
 
     def run(self, request, data: Module.ResultSet, **kwargs):
+        self.request = request
+        self.data = data
         return ProcessedData(data.get(RawData)[::-1])
 
     def teardown(self):
@@ -140,14 +143,17 @@ class TestModuleTestingWrapper:
 
     async def test_should_correctly_set_request(self, module_cls):
         module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        module._derived_class.run = MagicMock(return_value=ProcessedData('zyx'))
         mock = await ModuleTestingWrapper(module).build()
         request = {'key': 'value'}
         mock = mock.request(request)
+        _ = await mock.run()
         assert isinstance(mock, ModuleTestingWrapper)
-        assert mock._request == request
+        module._derived_class.run.assert_called_with(request=request, data=None)
 
     async def test_should_correctly_set_data(self, module_cls):
         module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
+        module._derived_class.run = MagicMock(return_value=ProcessedData('zyx'))
         mock = await ModuleTestingWrapper(module).build()
         data: RawData = RawData('xyz')
         mock = mock.data(data)
