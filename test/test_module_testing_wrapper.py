@@ -142,24 +142,30 @@ class TestModuleTestingWrapper:
         assert not mock.module.is_built
 
     async def test_should_correctly_set_request(self, module_cls):
-        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
-        module._derived_class.run = MagicMock(return_value=ProcessedData('zyx'))
+        target_request = {'key': 'value'}
+
+        @finalize
+        class ModuleTestSetRequest(Module.Runtime):
+            def run(self, request, *arg, **kwargs):
+                assert request == target_request
+
+        module = ModuleTestSetRequest('test-module')
         mock = await ModuleTestingWrapper(module).build()
-        request = {'key': 'value'}
-        mock = mock.request(request)
-        _ = await mock.run()
-        assert isinstance(mock, ModuleTestingWrapper)
-        module._derived_class.run.assert_called_with(request=request, data=None)
+        mock = mock.request(target_request)
+        await mock.run()
 
     async def test_should_correctly_set_data(self, module_cls):
-        module = module_cls('my-module-a').set_parameters(TestModuleTestingWrapper.module_params)
-        module._derived_class.run = MagicMock(return_value=ProcessedData('zyx'))
+        raw_data = RawData('xyz')
+
+        @finalize
+        class ModuleTestSetRequest(Module.Runtime):
+            def run(self, data, *arg, **kwargs):
+                assert data.get(RawData) == raw_data
+
+        module = ModuleTestSetRequest('test-module')
         mock = await ModuleTestingWrapper(module).build()
-        data: RawData = RawData('xyz')
-        mock = mock.data(data)
-        assert isinstance(mock, ModuleTestingWrapper)
-        assert isinstance(mock._data, ResultSet)
-        assert mock._data.collection[0].result.data == data.data
+        mock = mock.data(raw_data)
+        await mock.run()
 
     async def test_should_not_compile(self, module_cls):
         module = module_cls('my-module-a').set_parameters({})   # Missing required params
