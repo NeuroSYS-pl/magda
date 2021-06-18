@@ -5,7 +5,7 @@ from test.test_module_testing_wrapper import RawData, ModuleSync
 
 
 class TestWrapIntoResult:
-    def test_should_pass(self):
+    def test_should_wrap_data_into_result(self):
         data: RawData = RawData('xyz')
         interface = RawData
         name = 'raw_data'
@@ -20,6 +20,13 @@ class TestWrapIntoResult:
         assert result.src_class == src_class
         assert result.expose == expose
 
-    def test_should_fail(self):
+    def test_should_fail_for_missing_data(self):
         with pytest.raises(TypeError):
             wrap_into_result()
+
+    def test_should_accept_missing_arguments(self):
+        data: RawData = RawData('xyz')
+        result: Module.Result = wrap_into_result(data)
+
+        assert isinstance(result, Module.Result)
+        assert result.result == data
