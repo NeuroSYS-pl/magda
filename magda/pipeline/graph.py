@@ -93,7 +93,7 @@ class Graph:
                     ),
                     request=MagdaLogger.Parts.Request(str(request)),
                 )
-                logger.event('START')
+                logger.event('RUN')
                 module_result = await self._run_method_helper(
                     module, data, request, is_regular_runtime, logger,
                 )

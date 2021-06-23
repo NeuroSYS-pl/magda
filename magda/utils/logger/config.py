@@ -9,9 +9,7 @@ def get_default_format() -> List[LoggerConfig.Part]:
     return [
         LoggerConfig.Part.TIMESTAMP,
         LoggerConfig.Part.PIPELINE,
-        LoggerConfig.Part.MODULE,
-        LoggerConfig.Part.GROUP,
-        LoggerConfig.Part.REPLICA,
+        LoggerConfig.Part.UID,
         LoggerConfig.Part.REQUEST,
         LoggerConfig.Part.MESSAGE,
     ]
@@ -22,6 +20,7 @@ class LoggerConfig:
     class Part(Enum):
         TIMESTAMP = auto()
         PIPELINE = auto()
+        UID = auto()
         MODULE = auto()
         GROUP = auto()
         REPLICA = auto()

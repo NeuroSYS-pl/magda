@@ -3,16 +3,25 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Callable, Optional, Type
 
-from colorama import Fore, Style
-from datetime import datetime
-
-from magda.utils.logger.config import LoggerConfig
-from magda.utils.logger.parts import LoggerParts
+from .config import LoggerConfig
+from .parts import LoggerParts
+from .printers import *
 
 
 class MagdaLogger:
     Config = LoggerConfig
     Parts = LoggerParts
+
+    _parts_mapping = {
+        LoggerConfig.Part.TIMESTAMP: TimestampPrinter(),
+        LoggerConfig.Part.PIPELINE: PipelinePrinter(),
+        LoggerConfig.Part.MODULE: ModulePrinter(),
+        LoggerConfig.Part.GROUP: GroupPrinter(),
+        LoggerConfig.Part.REPLICA: ReplicaPrinter(),
+        LoggerConfig.Part.UID: UidPrinter(),
+        LoggerConfig.Part.REQUEST: RequestPrinter(),
+        LoggerConfig.Part.MESSAGE: MessagePrinter(),
+    }
 
     @classmethod
     def of(
@@ -45,58 +54,19 @@ class MagdaLogger:
 
     @staticmethod
     def _prepare_message(
-        msg: str,
         config: MagdaLogger.Config,
-        *,
-        pipeline: Optional[MagdaLogger.Parts.Pipeline] = None,
-        module: Optional[MagdaLogger.Parts.Module] = None,
-        group: Optional[MagdaLogger.Parts.Group] = None,
-        request: Optional[MagdaLogger.Parts.Request] = None,
-        is_event: bool = False,
-    ) -> str:
+        **kwargs,
+    ) -> None:
+        is_event = kwargs.get('is_event', False)
+
         if not config.enable or (not config.log_events and is_event):
             return
 
-        parts = {
-            MagdaLogger.Config.Part.TIMESTAMP: (
-                Fore.YELLOW
-                + f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}]"
-                + Fore.RESET
-            ),
-            MagdaLogger.Config.Part.PIPELINE: (
-                Fore.MAGENTA + f'{pipeline.kind} '
-                + Style.BRIGHT + f'({pipeline.name})'
-                + Fore.RESET + Style.NORMAL
-            ) if pipeline is not None else None,
-            MagdaLogger.Config.Part.MODULE: (
-                Fore.BLUE + f'{module.kind} '
-                + Style.BRIGHT + f'({module.name})'
-                + Fore.RESET + Style.NORMAL
-            ) if module is not None else None,
-            MagdaLogger.Config.Part.GROUP: (
-                Fore.CYAN + Style.BRIGHT
-                + f'({group.name})'
-                + Fore.RESET + Style.NORMAL
-            ) if group is not None else None,
-            MagdaLogger.Config.Part.REPLICA: (
-                Fore.CYAN + Style.BRIGHT
-                + f'({group.replica})'
-                + Fore.RESET + Style.NORMAL
-            ) if (group is not None and group.replica is not None) else None,
-            MagdaLogger.Config.Part.REQUEST: (
-                Fore.MAGENTA + f'[{request.text}]' + Fore.RESET
-            ) if request is not None else None,
-            MagdaLogger.Config.Part.MESSAGE: (
-                (Style.BRIGHT + Fore.GREEN + f'[{msg}]' + Fore.RESET + Style.NORMAL)
-                if is_event else msg
-            ),
-        }
-
-        message = ' '.join([
-            parts[key]
+        parts = [
+            MagdaLogger._parts_mapping[key].flush(**kwargs)
             for key in config.format
-            if parts[key] is not None
-        ])
+        ]
+        message = ' '.join([p for p in parts if p is not None])
 
         if config.output == MagdaLogger.Config.Output.STDOUT:
             print(message)
