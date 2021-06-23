@@ -9,6 +9,7 @@ class BasePrinter(ABC):
     @abstractmethod
     def flush(
         self,
+        colors: bool,
         *,
         msg: str = None,
         pipeline: Optional[LoggerParts.Pipeline] = None,

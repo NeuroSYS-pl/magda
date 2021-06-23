@@ -63,7 +63,10 @@ class MagdaLogger:
             return
 
         parts = [
-            MagdaLogger._parts_mapping[key].flush(**kwargs)
+            MagdaLogger._parts_mapping[key].flush(
+                colors=config.colors,
+                **kwargs,
+            )
             for key in config.format
         ]
         message = ' '.join([p for p in parts if p is not None])

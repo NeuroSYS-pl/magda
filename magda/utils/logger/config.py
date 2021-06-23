@@ -33,5 +33,6 @@ class LoggerConfig:
 
     enable: bool = True
     log_events: bool = True
+    colors: bool = True
     output: Union[Output, Callable[[str], None]] = Output.STDOUT
     format: List[Part] = field(default_factory=get_default_format)

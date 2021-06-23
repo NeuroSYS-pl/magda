@@ -5,13 +5,21 @@ from .base import BasePrinter
 
 
 class MessagePrinter(BasePrinter):
+    def _with_colors(self, text: str) -> str:
+        return (
+            Style.BRIGHT + Fore.GREEN
+            + text
+            + Fore.RESET + Style.NORMAL
+        )
+
     def flush(
         self,
+        colors: bool,
         msg: str = None,
         is_event: bool = False,
         **kwargs,
     ) -> Optional[str]:
-        return (
-            Style.BRIGHT + Fore.GREEN + f'[{msg}]' + Fore.RESET + Style.NORMAL
-            if is_event else msg
-        )
+        if is_event:
+            text = f'[{msg}]'
+            return self._with_colors(text) if colors else text
+        return msg

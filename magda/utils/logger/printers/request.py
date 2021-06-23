@@ -8,11 +8,16 @@ from .base import BasePrinter
 
 
 class RequestPrinter(BasePrinter):
+    def _with_colors(self, text: str) -> str:
+        return Fore.MAGENTA + text + Fore.RESET
+
     def flush(
         self,
+        colors: bool,
         request: Optional[LoggerParts.Request] = None,
         **kwargs,
     ) -> Optional[str]:
         if request is not None:
-            return Fore.MAGENTA + f'[{request.text}]' + Fore.RESET
+            text = f'[{request.text}]'
+            return self._with_colors(text) if colors else text
         return None

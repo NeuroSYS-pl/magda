@@ -8,15 +8,22 @@ from .base import BasePrinter
 
 
 class ModulePrinter(BasePrinter):
+    def _with_colors(self, kind: str, name: str) -> str:
+        return (
+            Fore.BLUE + f'{kind} '
+            + Style.BRIGHT + f'({name})'
+            + Fore.RESET + Style.NORMAL
+        )
+
     def flush(
         self,
+        colors: bool,
         module: Optional[LoggerParts.Module] = None,
         **kwargs,
     ) -> Optional[str]:
         if module is not None:
             return (
-                Fore.BLUE + f'{module.kind} '
-                + Style.BRIGHT + f'({module.name})'
-                + Fore.RESET + Style.NORMAL
+                self._with_colors(module.kind, module.name)
+                if colors else f'{module.kind} ({module.name})'
             )
         return None

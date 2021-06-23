@@ -8,17 +8,23 @@ from .base import BasePrinter
 
 
 class UidPrinter(BasePrinter):
+    def _with_colors(self, kind: str, name: str, group: str, replica: str) -> str:
+        return (
+            Fore.BLUE + f'{kind} ' + Style.BRIGHT
+            + f'({name}' + Fore.CYAN + group + Style.NORMAL + replica
+            + Fore.BLUE + Style.BRIGHT + ')'
+            + Fore.RESET + Style.NORMAL
+        )
+
     def flush(
         self,
+        colors: bool,
         module: Optional[LoggerParts.Module] = None,
         group: Optional[LoggerParts.Group] = None,
         **kwargs,
     ) -> Optional[str]:
         if module is not None:
-            group_str = (
-                Fore.CYAN + Style.BRIGHT + f':{group.name}' + Style.NORMAL
-                if group is not None else ''
-            )
+            group_str = f':{group.name}' if group is not None else ''
             replica_str = (
                 f':{group.replica}'
                 if (group is not None and group.replica is not None)
@@ -26,9 +32,8 @@ class UidPrinter(BasePrinter):
             )
 
             return (
-                Fore.BLUE + f'{module.kind} ' + Style.BRIGHT + '('
-                + f'{module.name}' + group_str + replica_str
-                + Fore.BLUE + Style.BRIGHT + ')'
-                + Fore.RESET + Style.NORMAL
+                self._with_colors(module.kind, module.name, group_str, replica_str)
+                if colors else f'{module.kind} ({module.name}{group_str}{replica_str})'
             )
+
         return None
