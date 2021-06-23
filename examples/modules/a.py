@@ -12,7 +12,7 @@ from examples.interfaces.fn import LambdaInterface
 
 @accept(StringInterface, LambdaInterface)
 @produce(StringInterface)
-@register('A')
+@register('ModuleA')
 @finalize
 class ModuleA(Module.Runtime):
     SLEEP_TIME = 2

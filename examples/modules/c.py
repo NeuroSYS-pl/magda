@@ -9,7 +9,7 @@ from examples.interfaces.string import StringInterface
 @accept(StringInterface)
 @produce(StringInterface)
 @expose()
-@register('C')
+@register('ModuleC')
 @finalize
 class ModuleC(Module.Runtime):
     async def run(self, data: Module.ResultSet, *args, **kwargs):

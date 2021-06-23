@@ -4,9 +4,7 @@ from time import time
 from magda.pipeline.sequential import SequentialPipeline
 
 from examples.interfaces.common import Request, Context
-from examples.modules.a import ModuleA
-from examples.modules.b import ModuleB
-from examples.modules.c import ModuleC
+from examples.modules import *
 
 
 class ExampleSimpleSequential:

@@ -6,11 +6,10 @@ from magda.pipeline.sequential import SequentialPipeline
 from magda.utils import MagdaLogger
 
 from examples.interfaces.common import Context, Request
-from examples.modules.a import ModuleA
-from examples.modules.b import ModuleB
-from examples.modules.c import ModuleC
+from examples.modules import *
 
 
+# Enable logging
 logging.basicConfig()
 logging.getLogger('magda').setLevel(logging.INFO)
 
@@ -39,7 +38,9 @@ class ExampleSequential:
 
         self.pipeline = await builder.build(
             context=lambda: Context(prefix),
-            logger=MagdaLogger.Config(),
+            logger=MagdaLogger.Config(
+                output=MagdaLogger.Config.Output.LOGGING,
+            ),
         )
 
     async def run(self, value: str = 'R', n_jobs: int = 3):
