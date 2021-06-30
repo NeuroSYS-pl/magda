@@ -2,14 +2,13 @@ import asyncio
 from time import time
 from pathlib import Path
 
+from magda import ConfigReader
 from magda.pipeline.parallel import init
 from magda.module.factory import ModuleFactory
-from magda.config_reader import ConfigReader
+from magda.utils.logger.logger import MagdaLogger
 
 from examples.interfaces.common import Context, Request
-from examples.modules.a import ModuleA
-from examples.modules.b import ModuleB
-from examples.modules.c import ModuleC
+from examples.modules import *
 
 
 class ExampleParallelConfigReader:
@@ -26,18 +25,20 @@ class ExampleParallelConfigReader:
         return Path(__file__).parent / 'configs' / config_name
 
     async def build(self, prefix: str = '{CTX}'):
-        ModuleFactory.register('ModuleA', ModuleA)
-        ModuleFactory.register('ModuleB', ModuleB)
-        ModuleFactory.register('ModuleC', ModuleC)
-
         config_file = self.get_config_file('sample_config_parallel.yaml')
+        config_params = {
+            'GROUP_M1': 'g1',
+            'GROUP_M4': 'g3',
+        }
+
         with open(config_file, 'r') as config:
             config = config.read()
             self.pipeline = await ConfigReader.read(
                 config,
                 ModuleFactory,
-                {'GROUP_M1': 'g1', 'GROUP_M4': 'g3'},
-                context=lambda: Context(prefix)
+                config_parameters=config_params,
+                context=lambda: Context(prefix),
+                logger=MagdaLogger.Config(),
             )
 
     async def run(self, value: str = 'R', n_jobs: int = 3):

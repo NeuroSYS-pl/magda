@@ -1,16 +1,32 @@
 from __future__ import annotations
 
 from collections import Counter
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from abc import ABC, ABCMeta, abstractmethod
+from typing import List, Dict, Any, Optional
 
 from magda.module.module import Module
 from magda.pipeline.graph_validator import GraphValidator
 
 
-class BasePipeline(ABC):
+class BasePipelineMeta(ABCMeta):
+    _counter = 0
+
+    @property
+    def idx(self):
+        idx, self._counter = self._counter, self._counter + 1
+        return idx
+
+
+class BasePipeline(metaclass=BasePipelineMeta):
     class Runtime(ABC):
-        def __init__(self, context: Any, shared_parameters: Any):
+        def __init__(
+            self,
+            *,
+            name: str,
+            context: Any,
+            shared_parameters: Any,
+        ):
+            self._name = name
             self._context = context
             self._shared_parameters = shared_parameters
 
@@ -20,6 +36,10 @@ class BasePipeline(ABC):
                 for r in results
                 if r.expose is not None
             }
+
+        @property
+        def name(self) -> str:
+            return self._name
 
         @property
         def context(self):
@@ -42,8 +62,12 @@ class BasePipeline(ABC):
         def modules(self):
             raise NotImplementedError()
 
-    def __init__(self):
+    def __init__(self, name: Optional[str] = None):
         self.modules: List[Module] = []
+        self.name = (
+            name if name is not None
+            else f'Pipeline-{BasePipeline.idx}'
+        )
 
     def add_module(self, module) -> BasePipeline:
         if not issubclass(type(module), Module):

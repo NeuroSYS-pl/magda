@@ -1,24 +1,41 @@
 from __future__ import annotations
 
 from uuid import UUID
-from typing import List
+from typing import List, Optional
 
 import ray
 
 from magda.module.module import Module
 from magda.pipeline.graph import Graph
 from magda.pipeline.parallel.future_result import FutureResult
+from magda.pipeline.parallel.group.state_type import StateType
+from magda.utils.logger import MagdaLogger
 
 
 @ray.remote
 class Actor:
-    def __init__(self, name, state_type, modules: List[Module]):
+    def __init__(
+        self,
+        *,
+        name: str,
+        index: Optional[int],
+        state_type: StateType,
+        modules: List[Module],
+    ):
         self.name = name
+        self.index = index
         self.state_type = state_type
         self.graph = Graph(modules)
+        self._logger = None
 
-    async def bootstrap(self):
-        await self.graph.bootstrap()
+    async def bootstrap(self, logger: MagdaLogger):
+        self._logger = logger.chain(
+            group=MagdaLogger.Parts.Group(
+                name=self.name,
+                replica=self.index,
+            ),
+        )
+        await self.graph.bootstrap(self._logger)
 
     async def run(self, job_id: UUID, request, results=[], is_regular_runtime=True):
         result = await self.graph.run(request, results, is_regular_runtime)

@@ -2,13 +2,12 @@ import asyncio
 from time import time
 from pathlib import Path
 
+from magda import ConfigReader
 from magda.module.factory import ModuleFactory
-from magda.config_reader import ConfigReader
+from magda.utils.logger.logger import MagdaLogger
 
 from examples.interfaces.common import Request, Context
-from examples.modules.a import ModuleA
-from examples.modules.d import ModuleD
-from examples.modules.c import ModuleC
+from examples.modules import *
 
 
 class ExampleSimpleSequentialConfigReader:
@@ -22,18 +21,20 @@ class ExampleSimpleSequentialConfigReader:
         return Path(__file__).parent / 'configs' / config_name
 
     async def build(self, prefix: str = '{CTX}'):
-        ModuleFactory.register('ModuleA', ModuleA)
-        ModuleFactory.register('ModuleD', ModuleD)
-        ModuleFactory.register('ModuleC', ModuleC)
-
         config_file = self.get_config_file('sample_config_sequential.yaml')
         with open(config_file, 'r') as config:
             config = config.read()
+            config_params = {
+                'THRESHOLD_1': 0.2,
+                'THRESHOLD_2': 0.5,
+            }
+
             self.pipeline = await ConfigReader.read(
                 config,
                 ModuleFactory,
-                {'THRESHOLD_1': 0.2, 'THRESHOLD_2': 0.5},
-                context=lambda: Context(prefix)
+                config_parameters=config_params,
+                context=lambda: Context(prefix),
+                logger=MagdaLogger.Config(),
             )
 
     async def run(self):

@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import asyncio
+import inspect
 from typing import Optional
 
-import ray
-
 from magda.module.base import BaseModuleRuntime
-from magda.module.results import ResultSet, Result
+from magda.utils.logger import MagdaLogger
 
 
 class ModuleRuntime(BaseModuleRuntime):
@@ -33,24 +33,46 @@ class ModuleRuntime(BaseModuleRuntime):
         self._is_regular_module = is_regular_module
         self._parameters = parameters
 
-    async def _on_bootstrap(self):
+    async def _on_bootstrap(self, **kwargs):
         if callable(self._context):
             self._context = self._context()
 
-        if asyncio.iscoroutinefunction(self.bootstrap):
-            await self.bootstrap()
-        else:
-            self.bootstrap()
+        signature = inspect.signature(self.bootstrap)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
 
-    def bootstrap(self):
+        if asyncio.iscoroutinefunction(self.bootstrap):
+            await self.bootstrap(**fn_kwargs)
+        else:
+            self.bootstrap(**fn_kwargs)
+
+    async def _on_teardown(self, **kwargs):
+        signature = inspect.signature(self.teardown)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
+
+        if asyncio.iscoroutinefunction(self.teardown):
+            await self.teardown(**fn_kwargs)
+        else:
+            self.teardown(**fn_kwargs)
+
+    def bootstrap(self, *args, **kwargs):
         """ Bootstrap module on target device """
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         """ Teardown module on target device """
         pass
 
-    def run(self, data: ResultSet, **kwargs):
+    def run(self, *args, **kwargs):
         """ Request Run """
         raise NotImplementedError
 

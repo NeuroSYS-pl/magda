@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class BaseModule(ABC):
-    def __init__(self, name, group: Optional[str] = None):
+    def __init__(self, name: str, group: Optional[str] = None):
         self._name = name
         self._group = group
 
@@ -19,4 +19,5 @@ class BaseModule(ABC):
 
 
 class BaseModuleRuntime(BaseModule):
-    pass
+    def __init__(self, name: str, group: Optional[str]):
+        super().__init__(name, group)

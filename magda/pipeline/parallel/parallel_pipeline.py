@@ -1,19 +1,20 @@
 from __future__ import annotations
-from typing import List, Set
+from typing import List, Optional, Set
 
 from magda.module.module import Module
 from magda.pipeline.base import BasePipeline
 from magda.pipeline.parallel.runtime import Runtime
 from magda.pipeline.parallel.group import Group
 from magda.pipeline.parallel.group.state_type import StateType
+from magda.utils.logger import MagdaLogger
 
 
 class ParallelPipeline(BasePipeline):
     Runtime = Runtime
     Group = Group
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: Optional[str] = None):
+        super().__init__(name)
         self._groups: List[Group] = []
 
     def add_group(self, group: Group) -> ParallelPipeline:
@@ -31,14 +32,20 @@ class ParallelPipeline(BasePipeline):
             if m.group == group and dep.group != group
         ])
 
-    async def build(self, context=None, shared_parameters=None) -> Runtime:
+    async def build(
+        self,
+        context=None,
+        shared_parameters=None,
+        *,
+        logger: Optional[MagdaLogger.Config] = None,
+    ) -> Runtime:
         self.validate()
         if any([m.group is None for m in self.modules]):
             raise Exception('At least one module does not have a group property')
 
         self._mark_and_validate_modules(modules=self.modules)
         runtime_modules = [
-            module.build(context, shared_parameters)
+            module.build(context=context, shared_parameters=shared_parameters)
             for module in self.modules
         ]
 
@@ -76,10 +83,17 @@ class ParallelPipeline(BasePipeline):
                 dependent_modules=dependent_modules,
                 dependent_modules_nonregular=dependent_modules_nonregular
             )
-            await runtime_group.bootstrap()
             runtime_groups.append(runtime_group)
 
-        return Runtime(runtime_groups, context, shared_parameters)
+        runtime = Runtime(
+            name=self.name,
+            groups=runtime_groups,
+            context=context,
+            shared_parameters=shared_parameters,
+            logger_config=logger,
+        )
+        await runtime._bootstrap()
+        return runtime
 
     @staticmethod
     def _exclude_own_modules(module_dependencies, modules):
