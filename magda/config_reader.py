@@ -160,10 +160,21 @@ class ConfigReader:
     @staticmethod
     def _add_modules_to_pipeline(modules, pipeline, module_factory):
         for mod in modules:
-            module = module_factory.create(mod.name, mod.type, mod.group, mod.expose)
+            created_module = module_factory.create(mod.name, mod.type, mod.group)
+            if mod.expose is not None:
+                if created_module.exposed:
+                    warnings.warn("The 'expose' setting declared in decorator for "
+                                  f"module: {created_module.name} will be overriden "
+                                  "by setting in config file.")
+                if isinstance(mod.expose, str):
+                    created_module.exposed = mod.expose
+                elif not mod.expose:
+                    created_module.exposed = None
+                else:
+                    created_module.exposed = created_module.name
             if mod.parameters:
-                module.set_parameters(mod.parameters)
-            pipeline.add_module(module)
+                created_module.set_parameters(mod.parameters)
+            pipeline.add_module(created_module)
         return pipeline
 
     @classmethod
