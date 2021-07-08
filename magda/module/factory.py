@@ -31,7 +31,13 @@ class ModuleFactory:
         return cls.module_references[tag]
 
     @classmethod
-    def create(cls, name: str, module_type: str, module_group: Optional[str] = None):
+    def create(
+        cls,
+        name: str,
+        module_type: str,
+        module_group: Optional[str] = None
+    ):
         if module_type not in cls.module_references:
             raise KeyError(f"'{module_type}' hasn't been registered in the ModuleFactory.")
+
         return cls.module_references[module_type](name, module_group)

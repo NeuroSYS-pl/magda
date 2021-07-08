@@ -1,0 +1,20 @@
+modules:
+  - name: mod2
+    type: DependingModule
+    expose: True
+
+  - name: mod1
+    type: DependingModule
+    expose: False
+
+  - name: mod0
+    type: ModuleSample
+    expose: 'sample-result'
+    depends_on:
+      - mod1
+      - mod2
+
+  - name: mod4
+    type: ModuleSuccessor
+    depends_on:
+      - mod0
