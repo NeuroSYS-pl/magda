@@ -166,12 +166,12 @@ class ConfigReader:
                     warnings.warn("The 'expose' setting declared in decorator for "
                                   f"module: {created_module.name} will be overriden "
                                   "by setting in config file.")
-                if isinstance(mod.expose, bool) and mod.expose:
-                    # when `True` assigned in config
-                    created_module.expose_result(mod.name)
-                else:
-                    # when string or `False` assigned in config
+                if isinstance(mod.expose, str):
                     created_module.expose_result(mod.expose)
+                elif not mod.expose:
+                    created_module.expose_result(None, False)
+                else:
+                    created_module.expose_result(mod.name)
             if mod.parameters:
                 created_module.set_parameters(mod.parameters)
             pipeline.add_module(created_module)
