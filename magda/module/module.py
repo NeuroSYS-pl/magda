@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Union
 
 from magda.module.base import BaseModule
 from magda.module.runtime import ModuleRuntime
@@ -42,9 +42,9 @@ class Module(BaseModule):
     def exposed(self) -> str:
         return self.name if self._exposed == '' else self._exposed
 
-    @exposed.setter
-    def exposed(self, value: str):
-        self._exposed = value
+    # @exposed.setter
+    # def exposed(self, value: str):
+    #     self._exposed = value
 
     @property
     def is_regular_module(self) -> bool:
@@ -95,8 +95,12 @@ class Module(BaseModule):
         else:
             raise TypeError(f'Parameters must be of type dict but were of type: {type(parameters)}')
 
-    def expose_result(self, name: Optional[str] = None) -> Module:
-        self._exposed = name if name is not None else ''
+    def expose_result(self, name: Optional[Union[str, bool]] = None) -> Module:
+        if name is None:
+            self._exposed = ''
+        else:
+            # boolean and string case
+            self._exposed = name if name else None
         return self
 
     def build(self, context=None, shared_parameters=None):
