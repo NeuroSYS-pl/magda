@@ -94,7 +94,7 @@ class Module(BaseModule):
         else:
             raise TypeError(f'Parameters must be of type dict but were of type: {type(parameters)}')
 
-    def expose_result(self, name: Optional[str] = None, enable: bool = True) -> Module:
+    def expose_result(self, name: Optional[str] = None, *, enable: bool = True) -> Module:
         self._exposed_name = name
         self._is_exposed = enable
         return self

@@ -169,7 +169,7 @@ class ConfigReader:
                 if isinstance(mod.expose, str):
                     created_module.expose_result(mod.expose)
                 elif not mod.expose:
-                    created_module.expose_result(None, False)
+                    created_module.expose_result(enable=False)
                 else:
                     created_module.expose_result(mod.name)
             if mod.parameters:
