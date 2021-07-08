@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import pytest
 from pathlib import Path
 
@@ -5,7 +7,7 @@ from magda.module.module import Module
 from magda.module.factory import ModuleFactory
 from magda.pipeline.sequential import SequentialPipeline
 from magda.config_reader import ConfigReader
-from magda.decorators import finalize, accept, produce
+from magda.decorators import finalize, accept, produce, expose
 from magda.exceptions import (WrongParametersStructureException,
                               WrongParameterValueException, ConfiguartionFileException)
 
@@ -114,3 +116,164 @@ class TestConfigReader:
                     ModuleFactory,
                     correct_parameters
                 )
+
+    @pytest.mark.asyncio
+    async def test_should_raise_error_on_incorrect_expose_type(self):
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        config_file = self.get_config_file('wrong_type_of_exposed_module_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory)
+
+    @pytest.mark.asyncio
+    async def test_should_raise_exception_on_duplicated_expose_values(self):
+        @produce(MockTestInterface)
+        @finalize
+        class DependingModule(Module.Runtime):
+            def run(self, *args, **kwargs):
+                pass
+
+        @accept(MockTestInterface)
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+        ModuleFactory.register('DependingModule', DependingModule)
+
+        config_file = self.get_config_file('duplicated_exposed_values_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(Exception):
+                await ConfigReader.read(config, ModuleFactory)
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_assign_expose_values_when_given(self):
+
+        @produce(MockTestInterface)
+        @finalize
+        class DependingModule(Module.Runtime):
+            def run(self, *args, **kwargs):
+                pass
+
+        @accept(MockTestInterface)
+        @produce(MockTestInterface)
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        @accept(MockTestInterface)
+        @finalize
+        class ModuleSuccessor(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+        ModuleFactory.register('DependingModule', DependingModule)
+        ModuleFactory.register('ModuleSuccessor', ModuleSuccessor)
+
+        config_file = self.get_config_file('correctly_exposed_modules_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory)
+
+        modules_exposed_dict = {
+            module.name: module.exposed
+            for module in pipeline.modules
+        }
+
+        assert 4 == len(pipeline.modules)
+        assert modules_exposed_dict['mod0'] == 'sample-result'
+        assert modules_exposed_dict['mod1'] is None
+        assert modules_exposed_dict['mod2'] == 'mod2'
+        assert modules_exposed_dict['mod4'] is None
+
+    @pytest.mark.asyncio
+    async def test_should_overide_declared_expose_values(self):
+
+        @produce(MockTestInterface)
+        @expose('declared-depending-result')
+        @finalize
+        class DependingModule(Module.Runtime):
+            def run(self, *args, **kwargs):
+                pass
+
+        @accept(MockTestInterface)
+        @produce(MockTestInterface)
+        @expose('declared-sample-result')
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        @accept(MockTestInterface)
+        @expose('should-remain-untouched')
+        @finalize
+        class ModuleSuccessor(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+        ModuleFactory.register('DependingModule', DependingModule)
+        ModuleFactory.register('ModuleSuccessor', ModuleSuccessor)
+
+        config_file = self.get_config_file('correctly_exposed_modules_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory)
+
+        modules_exposed_dict = {
+            module.name: module.exposed
+            for module in pipeline.modules
+        }
+
+        assert 4 == len(pipeline.modules)
+        assert modules_exposed_dict['mod0'] == 'sample-result'
+        assert modules_exposed_dict['mod1'] is None
+        assert modules_exposed_dict['mod2'] == 'mod2'
+        assert modules_exposed_dict['mod4'] == 'should-remain-untouched'
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_access_exposed_results(self):
+
+        @dataclass(frozen=True)
+        class DataInterface(Module.Interface):
+            data: str
+
+        @produce(DataInterface)
+        @expose('should-be-overridden')
+        @finalize
+        class DependingModule(Module.Runtime):
+            def run(self, *args, **kwargs):
+                return DataInterface('depending')
+
+        @accept(DataInterface)
+        @produce(DataInterface)
+        @finalize
+        class ModuleSample(Module.Runtime):
+            def run(self, *args, **kwargs):
+                return DataInterface('parent')
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+        ModuleFactory.register('DependingModule', DependingModule)
+
+        config_file = self.get_config_file('correctly_exposed_modules_for_results_check.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory)
+
+        runtime = await pipeline.run()
+
+        assert 'depending-result' in runtime
+        assert 'parent-result' in runtime
+        assert 'should-be-overridden' not in runtime
+        assert runtime['depending-result'].data == 'depending'
+        assert runtime['parent-result'].data == 'parent'

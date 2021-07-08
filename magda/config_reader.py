@@ -2,7 +2,7 @@ import yaml
 import re
 import warnings
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from numbers import Number
 
 from magda.module.factory import ModuleFactory
@@ -17,6 +17,7 @@ class ConfigReader:
     class ConfigModule:
         name: str
         type: str
+        expose: Optional[Union[str, bool]] = field(default=None)
         group: Optional[str] = field(default=None)
         depends_on: List[str] = field(default_factory=list)
         parameters: Dict[str, Any] = field(default=None)
@@ -40,6 +41,8 @@ class ConfigReader:
 
         modules, shared_parameters, group_options = \
             cls._extract_information_from_yaml(parsed_yaml, shared_parameters)
+
+        cls._check_expose_settings(modules)
 
         pipeline = (
             ParallelPipeline()
@@ -109,6 +112,15 @@ class ConfigReader:
         return config_str
 
     @staticmethod
+    def _check_expose_settings(modules: List[ConfigModule]):
+        for module in modules:
+            if not isinstance(module.expose, (str, bool)) and module.expose:
+                raise WrongParameterValueException(
+                    "Parameter 'expose' in config should accept string and bools only. "
+                    f"For module: '{module.name}' found value: '{module.expose}'."
+                )
+
+    @staticmethod
     def _validate_config_parameters_structure(config_parameters):
         if not isinstance(config_parameters, Dict):
             raise WrongParametersStructureException(
@@ -148,7 +160,7 @@ class ConfigReader:
     @staticmethod
     def _add_modules_to_pipeline(modules, pipeline, module_factory):
         for mod in modules:
-            module = module_factory.create(mod.name, mod.type, mod.group)
+            module = module_factory.create(mod.name, mod.type, mod.group, mod.expose)
             if mod.parameters:
                 module.set_parameters(mod.parameters)
             pipeline.add_module(module)

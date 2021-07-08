@@ -42,6 +42,10 @@ class Module(BaseModule):
     def exposed(self) -> str:
         return self.name if self._exposed == '' else self._exposed
 
+    @exposed.setter
+    def exposed(self, value: str):
+        self._exposed = value
+
     @property
     def is_regular_module(self) -> bool:
         return self._is_regular_module

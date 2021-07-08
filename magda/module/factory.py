@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from warnings import warn
-from typing import Optional
+from typing import Optional, Union
 
 from magda.module.module import Module
 
@@ -31,7 +31,27 @@ class ModuleFactory:
         return cls.module_references[tag]
 
     @classmethod
-    def create(cls, name: str, module_type: str, module_group: Optional[str] = None):
+    def create(
+        cls,
+        name: str,
+        module_type: str,
+        module_group: Optional[str] = None,
+        expose: Optional[Union[str, bool]] = None
+    ):
         if module_type not in cls.module_references:
             raise KeyError(f"'{module_type}' hasn't been registered in the ModuleFactory.")
-        return cls.module_references[module_type](name, module_group)
+
+        module: Module = cls.module_references[module_type](name, module_group)
+
+        if expose is not None:
+            if module.exposed:
+                warn(f"The 'expose' setting declared in decorator for module: {module.name} "
+                     "will be overriden by setting in config file.")
+            if isinstance(expose, str):
+                module.exposed = expose
+            elif not expose:
+                module.exposed = None
+            else:
+                module.exposed = module.name
+
+        return module

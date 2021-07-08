@@ -1,0 +1,4 @@
+modules:
+  - name: mod0
+    type: ModuleSample
+    expose: 12
