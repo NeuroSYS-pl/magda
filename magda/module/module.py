@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Union
 
 from magda.module.base import BaseModule
 from magda.module.runtime import ModuleRuntime
@@ -12,7 +12,8 @@ from magda.module.results import Result, ResultSet
 class Module(BaseModule):
     """ Generic Module class """
     _ancestors = []
-    _exposed: Optional[str] = None
+    _is_exposed: bool = False
+    _exposed_name: Optional[str] = None
     _produce_interface: Optional[ModuleInterface] = None
     _derived_class: ModuleRuntime = None
     _is_regular_module: bool = True
@@ -39,8 +40,10 @@ class Module(BaseModule):
         return self._input_modules
 
     @property
-    def exposed(self) -> str:
-        return self.name if self._exposed == '' else self._exposed
+    def exposed(self) -> Optional[str]:
+        if self._is_exposed:
+            return self.name if self._exposed_name is None else self._exposed_name
+        return None
 
     @property
     def is_regular_module(self) -> bool:
@@ -91,8 +94,9 @@ class Module(BaseModule):
         else:
             raise TypeError(f'Parameters must be of type dict but were of type: {type(parameters)}')
 
-    def expose_result(self, name: Optional[str] = None) -> Module:
-        self._exposed = name if name is not None else ''
+    def expose_result(self, name: Optional[str] = None, *, enable: bool = True) -> Module:
+        self._exposed_name = name
+        self._is_exposed = enable
         return self
 
     def build(self, *, context: Any = None, shared_parameters: Any = None):

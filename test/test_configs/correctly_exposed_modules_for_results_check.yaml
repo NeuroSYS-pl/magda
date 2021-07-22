@@ -1,0 +1,10 @@
+modules:
+  - name: mod1
+    type: DependingModule
+    expose: 'depending-result'
+
+  - name: mod0
+    type: ModuleSample
+    expose: 'parent-result'
+    depends_on:
+      - mod1

@@ -5,7 +5,7 @@ import yaml
 import warnings
 from dataclasses import dataclass, field
 from numbers import Number
-from typing import Optional, List, Dict, Any, Type
+from typing import Optional, List, Dict, Any, Type, Union
 
 from magda.module.factory import ModuleFactory
 from magda.pipeline.base import BasePipeline
@@ -21,6 +21,7 @@ class ConfigReader:
     class ConfigModule:
         name: str
         type: str
+        expose: Optional[Union[str, bool]] = field(default=None)
         group: Optional[str] = field(default=None)
         depends_on: List[str] = field(default_factory=list)
         parameters: Dict[str, Any] = field(default=None)
@@ -45,6 +46,8 @@ class ConfigReader:
 
         modules, shared_parameters, group_options = \
             cls._extract_information_from_yaml(parsed_yaml, shared_parameters)
+
+        cls._check_expose_settings(modules)
 
         pipeline = (
             ParallelPipeline()
@@ -117,6 +120,15 @@ class ConfigReader:
         return config_str
 
     @staticmethod
+    def _check_expose_settings(modules: List[ConfigModule]):
+        for module in modules:
+            if not isinstance(module.expose, (str, bool)) and module.expose:
+                raise WrongParameterValueException(
+                    "Parameter 'expose' in config should accept string and bools only. "
+                    f"For module: '{module.name}' found value: '{module.expose}'."
+                )
+
+    @staticmethod
     def _validate_config_parameters_structure(config_parameters):
         if not isinstance(config_parameters, Dict):
             raise WrongParametersStructureException(
@@ -156,10 +168,21 @@ class ConfigReader:
     @staticmethod
     def _add_modules_to_pipeline(modules, pipeline, module_factory):
         for mod in modules:
-            module = module_factory.create(mod.name, mod.type, mod.group)
+            created_module = module_factory.create(mod.name, mod.type, mod.group)
+            if mod.expose is not None:
+                if created_module.exposed:
+                    warnings.warn("The 'expose' setting declared in decorator for "
+                                  f"module: {created_module.name} will be overriden "
+                                  "by setting in config file.")
+                if isinstance(mod.expose, str):
+                    created_module.expose_result(mod.expose)
+                elif not mod.expose:
+                    created_module.expose_result(enable=False)
+                else:
+                    created_module.expose_result(mod.name)
             if mod.parameters:
-                module.set_parameters(mod.parameters)
-            pipeline.add_module(module)
+                created_module.set_parameters(mod.parameters)
+            pipeline.add_module(created_module)
         return pipeline
 
     @classmethod
