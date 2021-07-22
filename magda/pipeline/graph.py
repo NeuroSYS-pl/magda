@@ -15,6 +15,9 @@ class Graph:
     It's responsible for sorting as well as running all modules.
     """
 
+    BOOTSTRAP_EVENT = 'BOOTSTRAP'
+    TEARDOWN_EVENT = 'TEARDOWN'
+
     class TopologicalSorter:
         def __init__(self, modules: List[Module.Runtime]):
             self.modules = modules
@@ -74,7 +77,7 @@ class Graph:
         self,
         request,
         results: List[Module.Result] = [],
-        is_regular_runtime=True,
+        is_regular_runtime: bool = True,
     ) -> List[Module.Result]:
         """ Main method for running regular modules in the pipeline
 
@@ -117,7 +120,7 @@ class Graph:
                     kind=module.__class__.__name__,
                 ),
             )
-            logger.event('BOOTSTRAP')
+            logger.event(self.BOOTSTRAP_EVENT)
             await module._on_bootstrap(logger=logger)
 
     async def teardown(self):
@@ -128,7 +131,7 @@ class Graph:
                     kind=module.__class__.__name__,
                 ),
             )
-            logger.event('TEARDOWN')
+            logger.event(self.TEARDOWN_EVENT)
             await module._on_teardown(logger=logger)
 
     def _should_be_run(
@@ -160,11 +163,11 @@ class Graph:
         logger: MagdaLogger,
     ) -> Any:
         module_result = None
-        props = dict(
-            data=data,
-            request=request,
-            logger=logger,
-        )
+        props = {
+            "data": data,
+            "request": request,
+            "logger": logger,
+        }
 
         if issubclass(type(module), Module.Aggregate):
             if is_regular_runtime:

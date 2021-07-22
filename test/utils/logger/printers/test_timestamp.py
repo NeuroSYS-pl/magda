@@ -3,7 +3,7 @@ from magda.utils.logger.printers import TimestampPrinter
 
 
 class TestTimestampPrinter:
-    TIMESTAMP_REGEXP = r'(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}).(\d{3})'
+    TIMESTAMP_REGEXP = r'(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{3})'
     COLOR_REGEXP = r'\x1b'
 
     def test_should_print_timestamp(self):

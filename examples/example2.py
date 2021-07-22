@@ -19,6 +19,7 @@ class ExampleParallel:
         await example.run()
 
     async def build(self, prefix: str = '{CTX}'):
+        # The pipeline name is optional but we can directly set it to 'Example' here
         builder = ParallelPipeline(name='Example')
         builder.add_group(ParallelPipeline.Group('g1'))
         builder.add_group(ParallelPipeline.Group('g2'))

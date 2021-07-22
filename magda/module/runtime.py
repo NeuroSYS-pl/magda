@@ -5,7 +5,6 @@ import inspect
 from typing import Optional
 
 from magda.module.base import BaseModuleRuntime
-from magda.utils.logger import MagdaLogger
 
 
 class ModuleRuntime(BaseModuleRuntime):
@@ -34,6 +33,13 @@ class ModuleRuntime(BaseModuleRuntime):
         self._parameters = parameters
 
     async def _on_bootstrap(self, **kwargs):
+        """ Helper function for calling bootstrap method.
+
+        The main idea is to keep the method backward-compatible
+        by removing all extra arguments, which were missing
+        in the previous versions of MAGDA. Moreover, it supports
+        both sync and async versions of the bootstraps.
+        """
         if callable(self._context):
             self._context = self._context()
 
@@ -51,6 +57,13 @@ class ModuleRuntime(BaseModuleRuntime):
             self.bootstrap(**fn_kwargs)
 
     async def _on_teardown(self, **kwargs):
+        """ Helper function for calling teardown method.
+
+        The main idea is to keep the method backward-compatible
+        by removing all extra arguments, which were missing
+        in the previous versions of MAGDA. Moreover, it supports
+        both sync and async versions of the bootstraps.
+        """
         signature = inspect.signature(self.teardown)
         parameters = [p.name for p in signature.parameters.values()]
         fn_kwargs = {
