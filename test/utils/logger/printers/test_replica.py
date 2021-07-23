@@ -31,12 +31,12 @@ class TestReplicaPrinter:
         output = printer.flush(colors=False, group=None)
         assert output is None or output == ''
 
-    def test_should_accept_extra_arguments(self):
+    def test_should_ignore_extra_arguments(self):
         printer = ReplicaPrinter()
         group, replica = 'GroupG1', 20
 
         part = LoggerParts.Group(group, replica)
-        output_base = printer.flush(colors=False, group=part, msg='Test')
-        output_extra = printer.flush(colors=False, group=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, group=part)
+        output_extra = printer.flush(colors=False, group=part, extra=[1, 2, 3])
 
         assert output_base == output_extra

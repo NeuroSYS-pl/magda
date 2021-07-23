@@ -5,6 +5,9 @@ from .base import BasePrinter
 
 
 class MessagePrinter(BasePrinter):
+    EVENT_START_MARKER = '['
+    EVENT_END_MARKER = ']'
+
     def _with_colors(self, text: str) -> str:
         return (
             Style.BRIGHT + Fore.GREEN
@@ -20,6 +23,6 @@ class MessagePrinter(BasePrinter):
         **kwargs,
     ) -> Optional[str]:
         if is_event:
-            text = f'[{msg}]'
+            text = f'{self.EVENT_START_MARKER}{msg}{self.EVENT_END_MARKER}'
             return self._with_colors(text) if colors else text
         return msg

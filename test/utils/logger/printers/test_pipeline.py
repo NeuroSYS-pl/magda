@@ -33,12 +33,12 @@ class TestPipelinePrinter:
         output = printer.flush(colors=False, pipeline=None)
         assert output is None or output == ''
 
-    def test_should_accept_extra_arguments(self):
+    def test_should_ignore_extra_arguments(self):
         printer = PipelinePrinter()
         name, kind = 'test-x', 'TestX'
 
         part = LoggerParts.Pipeline(name, kind)
-        output_base = printer.flush(colors=False, pipeline=part, msg='Test')
-        output_extra = printer.flush(colors=False, pipeline=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, pipeline=part)
+        output_extra = printer.flush(colors=False, pipeline=part, extra=[1, 2, 3])
 
         assert output_base == output_extra

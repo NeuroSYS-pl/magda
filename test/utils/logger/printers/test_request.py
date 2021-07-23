@@ -31,12 +31,12 @@ class TestRequestPrinter:
         output = printer.flush(colors=False, request=None)
         assert output is None or output == ''
 
-    def test_should_accept_extra_arguments(self):
+    def test_should_ignore_extra_arguments(self):
         printer = RequestPrinter()
         request = 'Request(variable=5)'
 
         part = LoggerParts.Request(request)
-        output_base = printer.flush(colors=False, request=part, msg='Test')
-        output_extra = printer.flush(colors=False, request=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, request=part)
+        output_extra = printer.flush(colors=False, request=part, extra=[1, 2, 3])
 
         assert output_base == output_extra

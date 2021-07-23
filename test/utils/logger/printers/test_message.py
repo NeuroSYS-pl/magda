@@ -17,7 +17,7 @@ class TestMessagePrinter:
         printer = MessagePrinter()
         message = ''
         output = printer.flush(colors=False, msg=message, is_event=False)
-        assert output.find(message) != -1
+        assert output == ''
         assert re.search(self.COLOR_REGEXP, output) is None
 
     def test_should_print_standard_message_with_colors(self):
@@ -38,7 +38,7 @@ class TestMessagePrinter:
         printer = MessagePrinter()
         event = ''
         output = printer.flush(colors=False, msg=event, is_event=True)
-        assert output.find(event) != -1
+        assert output == f'{MessagePrinter.EVENT_START_MARKER}{MessagePrinter.EVENT_END_MARKER}'
         assert re.search(self.COLOR_REGEXP, output) is None
 
     def test_should_print_event_with_colors(self):
@@ -55,7 +55,7 @@ class TestMessagePrinter:
         event = printer.flush(colors=False, msg=base, is_event=True)
         assert standard != event
 
-    def test_should_accept_extra_arguments(self):
+    def test_should_ignore_extra_arguments(self):
         printer = MessagePrinter()
         message = 'Hello World!'
 

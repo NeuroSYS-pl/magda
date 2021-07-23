@@ -33,12 +33,12 @@ class TestModulePrinter:
         output = printer.flush(colors=False, module=None)
         assert output is None or output == ''
 
-    def test_should_accept_extra_arguments(self):
+    def test_should_ignore_extra_arguments(self):
         printer = ModulePrinter()
         name, kind = 'test-x', 'TestX'
 
         part = LoggerParts.Module(name, kind)
-        output_base = printer.flush(colors=False, module=part, msg='Test')
-        output_extra = printer.flush(colors=False, module=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, module=part)
+        output_extra = printer.flush(colors=False, module=part, extra=[1, 2, 3])
 
         assert output_base == output_extra
