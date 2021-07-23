@@ -128,11 +128,14 @@ class TestMagdaLogger:
         mock.assert_called_once_with(PartialOutput(request_name).with_color())
 
     def test_format_should_be_overriden(self):
-        request = MagdaLogger.Parts.Request('RequestR1')
+        request_name = 'RequestR1'
+        request = MagdaLogger.Parts.Request(request_name)
 
         mock = MagicMock()
         config = MagdaLogger.Config(output=mock, format=[])
         logger = MagdaLogger.of(config).chain(request=request)
 
-        logger.info('Hello!')
+        message = 'Hello!'
+        logger.info(message)
+
         mock.assert_called_once_with('')

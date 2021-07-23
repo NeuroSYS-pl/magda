@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from magda.module import Module
+from magda.module import Module, ModuleFactory
 from magda.decorators import accept, finalize
 from magda.pipeline import SequentialPipeline
+from magda.config_reader import ConfigReader
 from magda.utils.logger import MagdaLogger
 
 
@@ -63,6 +65,30 @@ class TestPipelineLogging:
         mock.assert_any_call(PartialOutput(f'{pipe_name}.*{module2.name}.*RUN'))
         mock.assert_any_call(PartialOutput(f'{pipe_name}.*{module1.name}.*{MESSAGE}'))
         mock.assert_any_call(PartialOutput(f'{pipe_name}.*{module2.name}.*{MESSAGE}'))
+
+    async def test_should_log_pipeline_from_config(self):
+        mock = MagicMock()
+        module1_name, module2_name = 'TestModuleA1', 'TestModuleA2'
+        config_path = Path(__file__).parent / 'configs' / 'pipeline.yml'
+        ModuleFactory.register('LoggerModuleA', ModuleA)
+
+        with open(config_path) as config:
+            pipe = await ConfigReader.read(
+                config=config.read(),
+                module_factory=ModuleFactory,
+                config_parameters={"name1": module1_name, "name2": module2_name},
+                logger=MagdaLogger.Config(colors=False, output=mock),
+            )
+
+        await pipe.run()
+
+        assert mock.call_count == 6
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module1_name}.*BOOTSTRAP'))
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module2_name}.*BOOTSTRAP'))
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module1_name}.*RUN'))
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module2_name}.*RUN'))
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module1_name}.*{MESSAGE}'))
+        mock.assert_any_call(PartialOutput(f'{pipe.name}.*{module2_name}.*{MESSAGE}'))
 
     async def test_should_log_pipeline_with_colors(self):
         mock = MagicMock()

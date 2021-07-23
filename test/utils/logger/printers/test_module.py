@@ -38,8 +38,7 @@ class TestModulePrinter:
         name, kind = 'test-x', 'TestX'
 
         part = LoggerParts.Module(name, kind)
-        output = printer.flush(colors=False, module=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, module=part, msg='Test')
+        output_extra = printer.flush(colors=False, module=part, extra=[1, 2, 3], msg='Test')
 
-        assert output.find(name) != -1
-        assert output.find(kind) != -1
-        assert re.search(self.COLOR_REGEXP, output) is None
+        assert output_base == output_extra

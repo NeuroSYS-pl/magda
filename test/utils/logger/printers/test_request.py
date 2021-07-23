@@ -36,7 +36,7 @@ class TestRequestPrinter:
         request = 'Request(variable=5)'
 
         part = LoggerParts.Request(request)
-        output = printer.flush(colors=False, request=part, extra=[1, 2, 3], msg='Test')
+        output_base = printer.flush(colors=False, request=part, msg='Test')
+        output_extra = printer.flush(colors=False, request=part, extra=[1, 2, 3], msg='Test')
 
-        assert output.find(request) != -1
-        assert re.search(self.COLOR_REGEXP, output) is None
+        assert output_base == output_extra

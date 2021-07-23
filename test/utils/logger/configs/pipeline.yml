@@ -1,0 +1,8 @@
+modules:
+  - name: ${name1}
+    type: LoggerModuleA
+
+  - name: ${name2}
+    type: LoggerModuleA
+    depends_on:
+      - ${name1}

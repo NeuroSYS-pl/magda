@@ -65,3 +65,15 @@ class TestUidPrinter:
         assert output.find(group_name) != -1
         assert output.find(str(replica)) != -1
         assert re.search(self.COLOR_REGEXP, output) is not None
+
+    def test_should_accept_extra_arguments(self):
+        printer = UidPrinter()
+        module_name, module_kind = 'test-x', 'TestX'
+        group_name, replica = 'GroupG1', 222
+        module = LoggerParts.Module(module_name, module_kind)
+        group = LoggerParts.Group(group_name, replica)
+
+        output_base = printer.flush(colors=True, group=group, module=module)
+        output_extra = printer.flush(colors=True, group=group, module=module, extra=[1, 2, 3])
+
+        assert output_base == output_extra
