@@ -1,11 +1,10 @@
 from __future__ import annotations
+
 import asyncio
+import inspect
 from typing import Optional
 
-import ray
-
 from magda.module.base import BaseModuleRuntime
-from magda.module.results import ResultSet, Result
 
 
 class ModuleRuntime(BaseModuleRuntime):
@@ -33,24 +32,60 @@ class ModuleRuntime(BaseModuleRuntime):
         self._is_regular_module = is_regular_module
         self._parameters = parameters
 
-    async def _on_bootstrap(self):
+    async def _on_bootstrap(self, **kwargs):
+        """ Helper function for calling bootstrap method.
+
+        The main idea is to keep the method backward-compatible
+        by removing all extra arguments, which were missing
+        in the previous versions of MAGDA. Moreover, it supports
+        both sync and async versions of the bootstraps.
+        """
         if callable(self._context):
             self._context = self._context()
 
-        if asyncio.iscoroutinefunction(self.bootstrap):
-            await self.bootstrap()
-        else:
-            self.bootstrap()
+        signature = inspect.signature(self.bootstrap)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
 
-    def bootstrap(self):
+        if asyncio.iscoroutinefunction(self.bootstrap):
+            await self.bootstrap(**fn_kwargs)
+        else:
+            self.bootstrap(**fn_kwargs)
+
+    async def _on_teardown(self, **kwargs):
+        """ Helper function for calling teardown method.
+
+        The main idea is to keep the method backward-compatible
+        by removing all extra arguments, which were missing
+        in the previous versions of MAGDA. Moreover, it supports
+        both sync and async versions of the bootstraps.
+        """
+        signature = inspect.signature(self.teardown)
+        parameters = [p.name for p in signature.parameters.values()]
+        fn_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key in parameters
+        }
+
+        if asyncio.iscoroutinefunction(self.teardown):
+            await self.teardown(**fn_kwargs)
+        else:
+            self.teardown(**fn_kwargs)
+
+    def bootstrap(self, *args, **kwargs):
         """ Bootstrap module on target device """
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         """ Teardown module on target device """
         pass
 
-    def run(self, data: ResultSet, **kwargs):
+    def run(self, *args, **kwargs):
         """ Request Run """
         raise NotImplementedError
 

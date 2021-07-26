@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import List, Any
-
-import ray
+from typing import List
 
 from magda.module.module import Module
 from magda.pipeline.base import BasePipeline
@@ -11,16 +9,30 @@ from magda.pipeline.parallel.group import Group
 from magda.pipeline.parallel.job import Job
 from magda.pipeline.parallel.group.state_type import StateType
 from magda.exceptions import ClosedPipelineException
+from magda.utils.logger import MagdaLogger
 
 
 class Runtime(BasePipeline.Runtime):
-    def __init__(self, groups: List[Group.Runtime], context: Any, shared_parameters: Any):
-        super().__init__(context, shared_parameters)
+    def __init__(
+        self,
+        *,
+        groups: List[Group.Runtime],
+        logger_config: MagdaLogger.Config,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
         self.groups = groups
         self._jobs: List[Job] = []
         self._is_closed = False
         self._idle_flag = asyncio.Event()
         self._idle_flag.set()
+        self._logger = MagdaLogger.of(
+            logger_config,
+            pipeline=MagdaLogger.Parts.Pipeline(
+                name=self.name,
+                kind='ParallelPipeline',
+            )
+        )
 
     @property
     def context(self):
@@ -45,6 +57,12 @@ class Runtime(BasePipeline.Runtime):
     @property
     def closed(self) -> bool:
         return self._is_closed
+
+    async def _bootstrap(self):
+        await asyncio.gather(*[
+            group.bootstrap(self._logger)
+            for group in self.groups
+        ])
 
     async def close(self):
         self._is_closed = True

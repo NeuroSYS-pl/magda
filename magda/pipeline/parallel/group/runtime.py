@@ -8,6 +8,7 @@ from magda.module.module import Module
 from magda.pipeline.parallel.group.actor import Actor
 from magda.pipeline.parallel.group.actor_pool import ParallelActorPool
 from magda.pipeline.parallel.group.state_type import StateType
+from magda.utils.logger import MagdaLogger
 
 
 class GroupRuntime:
@@ -30,9 +31,15 @@ class GroupRuntime:
         self.dependencies_nonregular = set([m.group for m in dependent_modules_nonregular])
         self.module_dependencies_nonregular = set([m.name for m in dependent_modules_nonregular])
         self.pool = ParallelActorPool([
-            Actor.options(**options).remote(name, state_type, modules)
-            for _ in range(replicas)
+            Actor.options(**options).remote(
+                name=name,
+                index=i if replicas > 1 else None,
+                state_type=state_type,
+                modules=modules,
+            )
+            for i in range(replicas)
         ])
+        self._logger = None
 
     @property
     def modules(self) -> List[Module]:
@@ -49,8 +56,9 @@ class GroupRuntime:
     def fulfills(self, names: Iterable[str]) -> bool:
         return set(names).issuperset(self.module_dependencies)
 
-    async def bootstrap(self):
-        await self.pool.bootstrap()
+    async def bootstrap(self, logger: MagdaLogger):
+        self._logger = logger.chain(group=MagdaLogger.Parts.Group(name=self.name))
+        await self.pool.bootstrap(self._logger)
 
     async def run(self, job_id: UUID, request, results, is_regular_runtime):
         return asyncio.ensure_future(

@@ -1,13 +1,17 @@
-import yaml
+from __future__ import annotations
+
 import re
+import yaml
 import warnings
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, Union
 from numbers import Number
+from typing import Optional, List, Dict, Any, Type, Union
 
 from magda.module.factory import ModuleFactory
+from magda.pipeline.base import BasePipeline
 from magda.pipeline.sequential import SequentialPipeline
 from magda.pipeline.parallel.parallel_pipeline import ParallelPipeline
+from magda.utils.logger import MagdaLogger
 from magda.exceptions import (WrongParametersStructureException,
                               WrongParameterValueException, ConfiguartionFileException)
 
@@ -24,14 +28,15 @@ class ConfigReader:
 
     @classmethod
     async def read(
-        cls,
+        cls: Type[ConfigReader],
         config: str,
         module_factory: ModuleFactory,
         config_parameters: Optional[Dict] = None,
         context: Optional[Any] = None,
-        shared_parameters: Optional[Dict] = None
-    ):
-
+        shared_parameters: Optional[Dict] = None,
+        *,
+        logger: Optional[MagdaLogger.Config] = None,
+    ) -> BasePipeline.Runtime:
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
 
@@ -66,7 +71,12 @@ class ConfigReader:
                         "whereas it's used as a dependency."
                     )
 
-        runtime = await pipeline.build(context, shared_parameters)
+        runtime = await pipeline.build(
+            context=context,
+            shared_parameters=shared_parameters,
+            logger=logger,
+        )
+
         return runtime
 
     @staticmethod
@@ -74,13 +84,11 @@ class ConfigReader:
         declared_variables = list(set(re.findall(r'\${(\w+)}', config_str)))
 
         if declared_variables:
-
             if not config_parameters:
                 raise ConfiguartionFileException(
                     "Config file contains declared variables and"
                     f"no config parameters were passed. Found variables: {declared_variables}"
                 )
-
             else:
                 parameters_variables = config_parameters.keys()
 

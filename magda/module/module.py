@@ -99,7 +99,7 @@ class Module(BaseModule):
         self._is_exposed = enable
         return self
 
-    def build(self, context=None, shared_parameters=None):
+    def build(self, *, context: Any = None, shared_parameters: Any = None):
         return self._derived_class(
             name=self.name,
             group=self.group,
@@ -110,5 +110,5 @@ class Module(BaseModule):
             context=context,
             shared_parameters=shared_parameters,
             is_regular_module=self.is_regular_module,
-            parameters=self._parameters
+            parameters=self._parameters,
         )

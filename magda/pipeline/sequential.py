@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from warnings import warn
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from magda.pipeline.base import BasePipeline
 from magda.pipeline.graph import Graph
 from magda.module.module import Module
 from magda.exceptions import ClosedPipelineException
+from magda.utils.logger import MagdaLogger
 
 
 class SequentialPipeline(BasePipeline):
@@ -14,10 +15,17 @@ class SequentialPipeline(BasePipeline):
 
     class Runtime(BasePipeline.Runtime):
         """ Sequential pipeline runner """
-        def __init__(self, graph: Graph, context=None, shared_parameters=None):
-            super().__init__(context, shared_parameters)
+        def __init__(self, *, graph: Graph, logger_config: MagdaLogger.Config, **kwargs):
+            super().__init__(**kwargs)
             self.graph = graph
             self._is_closed = False
+            self._logger = MagdaLogger.of(
+                logger_config,
+                pipeline=MagdaLogger.Parts.Pipeline(
+                    name=self.name,
+                    kind='SequentialPipeline',
+                ),
+            )
 
         @property
         def modules(self) -> List[Module]:
@@ -26,6 +34,9 @@ class SequentialPipeline(BasePipeline):
         @property
         def closed(self) -> bool:
             return self._is_closed
+
+        async def _bootstrap(self):
+            await self.graph.bootstrap(self._logger)
 
         async def close(self):
             self._is_closed = True
@@ -40,7 +51,13 @@ class SequentialPipeline(BasePipeline):
         async def process(self, request=None) -> Dict[str, Module.Result]:
             return await self.run(request=request, is_regular_runtime=False)
 
-    async def build(self, context=None, shared_parameters=None) -> SequentialPipeline.Runtime:
+    async def build(
+        self,
+        context=None,
+        shared_parameters=None,
+        *,
+        logger: Optional[MagdaLogger.Config] = None,
+    ) -> SequentialPipeline.Runtime:
         self.validate()
         if any([m.group is not None for m in self.modules]):
             msg = ', '.join([
@@ -49,14 +66,23 @@ class SequentialPipeline(BasePipeline):
                 if m.group is not None
             ])
             warn(f'The property "group" for modules: ${msg} will be ignored!')
-
         self._mark_and_validate_modules(modules=self.modules)
 
-        modules = [module.build(context, shared_parameters) for module in self.modules]
-
+        modules = [
+            module.build(context=context, shared_parameters=shared_parameters)
+            for module in self.modules
+        ]
         graph = Graph(modules)
-        await graph.bootstrap()
-        return self.Runtime(graph, context, shared_parameters)
+
+        runtime = self.Runtime(
+            graph=graph,
+            name=self.name,
+            context=context,
+            shared_parameters=shared_parameters,
+            logger_config=logger,
+        )
+        await runtime._bootstrap()
+        return runtime
 
     def _mark_and_validate_modules(self, modules):
         aggregate_modules = self._find_aggregate_modules(modules)
