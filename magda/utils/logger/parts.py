@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Optional
 
 
@@ -22,3 +23,10 @@ class LoggerParts:
     @dataclass(frozen=True)
     class Request:
         text: str
+
+    class Level(Enum):
+        INFO = auto()
+        WARNING = auto()
+        ERROR = auto()
+        DEBUG = auto()
+        CRITICAL = auto()

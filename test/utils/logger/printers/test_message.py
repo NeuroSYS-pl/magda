@@ -1,6 +1,10 @@
 import re
-from colorama import Fore
+import pytest
+
+from colorama import Fore, Style
+
 from magda.utils.logger.printers import *
+from magda.utils.logger.parts import LoggerParts
 
 
 class TestMessagePrinter:
@@ -63,3 +67,46 @@ class TestMessagePrinter:
         output_extra = printer.flush(colors=False, msg=message, extra=[1, 2, 3], is_event=False)
 
         assert output_base == output_extra
+
+    @pytest.mark.parametrize(
+        "level,expected_color",
+        [
+            (LoggerParts.Level.WARNING, Fore.YELLOW),
+            (LoggerParts.Level.ERROR, Fore.RED),
+            (LoggerParts.Level.DEBUG, Fore.GREEN),
+            (LoggerParts.Level.CRITICAL, Fore.RED)
+        ]
+    )
+    def test_should_log_non_info_level_in_color(self, level, expected_color):
+        printer = MessagePrinter()
+        base = 'TEST'
+        message_formatted = expected_color + base + Fore.RESET
+        output = printer.flush(colors=True, msg=base, is_event=False, level=level)
+        assert output.find(message_formatted) != -1
+
+    def test_should_print_critical_in_color_and_bold(self):
+        printer = MessagePrinter()
+        base = 'TEST'
+        message_formatted = Style.BRIGHT + Fore.RED + base + Fore.RESET
+        output = printer.flush(
+            colors=True,
+            msg=base,
+            is_event=False,
+            level=LoggerParts.Level.CRITICAL
+        )
+        assert output.find(message_formatted) != -1
+
+    @pytest.mark.parametrize(
+        "level",
+        [
+            LoggerParts.Level.WARNING,
+            LoggerParts.Level.ERROR,
+            LoggerParts.Level.DEBUG,
+            LoggerParts.Level.CRITICAL
+        ]
+    )
+    def test_should_log_non_info_level_without_color_if_set(self, level):
+        printer = MessagePrinter()
+        base = 'TEST'
+        output = printer.flush(colors=False, msg=base, is_event=False, level=level)
+        assert re.search(self.COLOR_REGEXP, output) is None

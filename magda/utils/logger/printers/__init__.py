@@ -6,6 +6,7 @@ from .replica import ReplicaPrinter
 from .request import RequestPrinter
 from .message import MessagePrinter
 from .uid import UidPrinter
+from .level import LevelPrinter
 
 __all__ = [
     'TimestampPrinter',
@@ -16,4 +17,5 @@ __all__ = [
     'RequestPrinter',
     'MessagePrinter',
     'UidPrinter',
+    'LevelPrinter'
 ]

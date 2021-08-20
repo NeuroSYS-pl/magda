@@ -17,6 +17,7 @@ class BasePrinter(ABC):
         group: Optional[LoggerParts.Group] = None,
         request: Optional[LoggerParts.Request] = None,
         is_event: bool = False,
+        level: LoggerParts.Level = LoggerParts.Level.INFO,
         **kwargs,
     ) -> Optional[str]:
         raise NotImplementedError()

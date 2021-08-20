@@ -13,6 +13,7 @@ class MagdaLogger:
     Parts = LoggerParts
 
     _parts_mapping = {
+        LoggerConfig.Part.LEVEL: LevelPrinter(),
         LoggerConfig.Part.TIMESTAMP: TimestampPrinter(),
         LoggerConfig.Part.PIPELINE: PipelinePrinter(),
         LoggerConfig.Part.MODULE: ModulePrinter(),
@@ -38,9 +39,24 @@ class MagdaLogger:
     def __init__(self, callback: Optional[Callable[[str, Any], None]] = None) -> None:
         self._callback = callback
 
-    def info(self, msg: str) -> None:
+    def log_message(self, msg: str, level: LoggerParts.Level) -> None:
         if self._callback:
-            self._callback(msg=msg, is_event=False)
+            self._callback(msg=msg, is_event=False, level=level)
+
+    def info(self, msg: str) -> None:
+        self.log_message(msg=msg, level=LoggerParts.Level.INFO)
+
+    def error(self, msg: str) -> None:
+        self.log_message(msg=msg, level=LoggerParts.Level.ERROR)
+
+    def debug(self, msg: str) -> None:
+        self.log_message(msg=msg, level=LoggerParts.Level.DEBUG)
+
+    def critical(self, msg: str) -> None:
+        self.log_message(msg=msg, level=LoggerParts.Level.CRITICAL)
+
+    def warn(self, msg: str) -> None:
+        self.log_message(msg=msg, level=LoggerParts.Level.WARNING)
 
     def event(self, msg: str) -> None:
         if self._callback:
@@ -59,21 +75,39 @@ class MagdaLogger:
     ) -> None:
         is_event = kwargs.get('is_event', False)
 
+        level = kwargs.get('level', LoggerParts.Level.INFO)
+
         if not config.enable or (not config.log_events and is_event):
             return
+
+        message_format = config.format
+
+        if (config.output == MagdaLogger.Config.Output.LOGGING
+           and LoggerConfig.Part.LEVEL in message_format):
+            message_format.remove(LoggerConfig.Part.LEVEL)
 
         parts = [
             MagdaLogger._parts_mapping[key].flush(
                 colors=config.colors,
                 **kwargs,
             )
-            for key in config.format
+            for key in message_format
         ]
+
         message = ' '.join([p for p in parts if p is not None])
 
         if config.output == MagdaLogger.Config.Output.STDOUT:
             print(message)
         elif config.output == MagdaLogger.Config.Output.LOGGING:
-            getLogger('magda.runtime').info(message)
+            if level == LoggerParts.Level.DEBUG:
+                getLogger('magda.runtime').debug(message)
+            elif level == LoggerParts.Level.ERROR:
+                getLogger('magda.runtime').error(message)
+            elif level == LoggerParts.Level.WARNING:
+                getLogger('magda.runtime').warn(message)
+            elif level == LoggerParts.Level.CRITICAL:
+                getLogger('magda.runtime').critical(message)
+            else:
+                getLogger('magda.runtime').info(message)
         elif callable(config.output):
             config.output(message)

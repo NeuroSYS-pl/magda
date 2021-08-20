@@ -19,7 +19,11 @@ class ModuleA(Module.Runtime):
 
     def bootstrap(self, logger: MagdaLogger):
         ctx: Context = self.context
-        logger.info(f'Context.timer = {ctx.timer}')
+        logger.info(f'Context.timer = {ctx.timer} to demonstrate INFO level')
+        logger.debug(f'Context.timer = {ctx.timer} to demonstrate DEBUG level')
+        logger.warn(f'Context.timer = {ctx.timer} to demonstrate WARN level')
+        logger.error(f'Context.timer = {ctx.timer} to demonstrate ERROR level')
+        logger.critical(f'Context.timer = {ctx.timer} to demonstrate CRITICAL level')
 
     async def teardown(self, logger: MagdaLogger):
         ctx: Context = self.context
