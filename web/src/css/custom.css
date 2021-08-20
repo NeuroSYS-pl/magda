@@ -38,3 +38,10 @@ html[data-theme='dark'] {
 html[data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
 }
+
+.diagram {
+  display: block;
+  margin: auto;
+  border: transparent;
+  border-radius: 1rem;
+}

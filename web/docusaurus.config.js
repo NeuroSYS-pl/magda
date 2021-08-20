@@ -24,16 +24,20 @@ module.exports = {
       items: [
         {
           type: 'doc',
-          docId: 'intro',
+          docId: 'home',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Guides',
         },
         {
-          type: 'doc',
-          docId: 'api/index',
+          href: 'https://github.com/NeuroSYS-pl/magda/tree/main/examples',
           position: 'left',
-          label: 'API',
+          label: 'Examples',
         },
+        // {
+        //   to: 'api',
+        //   position: 'left',
+        //   label: 'API',
+        // },
         {
           href: 'https://github.com/NeuroSYS-pl/magda',
           label: 'GitHub',
@@ -43,43 +47,44 @@ module.exports = {
     },
     footer: {
       style: 'dark',
-      links: [
-        {
-          title: 'Docs',
-          items: [
-            {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
-          ],
-        },
-        {
-          title: 'API',
-          items: [
-            {
-              label: 'Module',
-              to: '/docs/api/module',
-            },
-            {
-              label: 'Pipeline',
-              to: '/docs/api/pipeline',
-            },
-            {
-              label: 'Config',
-              to: '/docs/api/config',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/NeuroSYS-pl/magda',
-            },
-          ],
-        },
-      ],
+      // TODO: Add links
+      // links: [
+      //   {
+      //     title: 'Docs',
+      //     items: [
+      //       {
+      //         label: 'Tutorial',
+      //         to: '/docs/intro',
+      //       },
+      //     ],
+      //   },
+      //   {
+      //     title: 'API',
+      //     items: [
+      //       {
+      //         label: 'Module',
+      //         to: '/docs/api/module',
+      //       },
+      //       {
+      //         label: 'Pipeline',
+      //         to: '/docs/api/pipeline',
+      //       },
+      //       {
+      //         label: 'Config',
+      //         to: '/docs/api/config',
+      //       },
+      //     ],
+      //   },
+      //   {
+      //     title: 'More',
+      //     items: [
+      //       {
+      //         label: 'GitHub',
+      //         href: 'https://github.com/NeuroSYS-pl/magda',
+      //       },
+      //     ],
+      //   },
+      // ],
       logo: {
         alt: 'NeuroSYS',
         src: 'https://neurosys.com/wp-content/themes/neurosys/static/images/logo-white.svg',
