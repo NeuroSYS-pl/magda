@@ -86,12 +86,11 @@ class Job:
 
             for task in done:
                 future: FutureResult = task.result()
-                for module_result in future.result:
+                for module_result in future.result.collection:
                     self._results[module_result.name] = module_result
                 self._status[future.group] = Job.GroupStatus.DONE
                 del self._tasks[future.group]
 
             for group in self._ready_groups:
                 await self._run_group(group)
-
-        return self._results.values()
+        return Module.ResultSet(list(self._results.values()))

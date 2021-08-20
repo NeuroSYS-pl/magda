@@ -87,8 +87,8 @@ class Graph:
         """
         results = results.copy()
         for module in self._modules:
-            if self._should_be_run(module=module, is_regular_runtime=is_regular_runtime):
-                data = Module.ResultSet([r for r in results if r.name in module.input_modules])
+            if self._should_be_run(module=module, current_results=Module.ResultSet(results), is_regular_runtime=is_regular_runtime):
+                predecessors_data = Module.ResultSet([r for r in results if r.name in module.input_modules])
                 logger = self._logger.chain(
                     module=MagdaLogger.Parts.Module(
                         name=module.name,
@@ -97,19 +97,33 @@ class Graph:
                     request=MagdaLogger.Parts.Request(str(request)),
                 )
                 logger.event('RUN')
-                module_result = await self._run_method_helper(
-                    module, data, request, is_regular_runtime, logger,
-                )
-                results.append(
-                    Module.Result(
-                        result=module_result,
-                        interface=module.interface,
-                        name=module.name,
-                        src_class=type(module),
-                        expose=self._exposed_result(module, is_regular_runtime),
+                try:
+                    module_result = await self._run_method_helper(
+                        module, predecessors_data, request, is_regular_runtime, logger,
                     )
-                )
-        return results
+                    results.append(
+                        Module.Result(
+                            result=module_result,
+                            error=None,
+                            interface=module.interface,
+                            name=module.name,
+                            src_class=type(module),
+                            expose=self._exposed_result(module, is_regular_runtime),
+                        )
+                    )
+                except Exception as e:
+                    logger.info(f"Module {module.name} has failed. Stopping the pipeline")
+                    results.append(
+                        Module.Result(
+                            result=None,
+                            error=e,
+                            interface=module.interface,
+                            name=module.name,
+                            src_class=type(module),
+                            expose=self._exposed_result(module, is_regular_runtime),
+                        )
+                    )
+        return Module.ResultSet(results)
 
     async def bootstrap(self, logger: MagdaLogger) -> None:
         self._logger = logger
@@ -137,12 +151,17 @@ class Graph:
     def _should_be_run(
         self,
         module: Module.Runtime,
+        current_results: Module.ResultSet,
         is_regular_runtime: bool,
     ) -> bool:
-        if is_regular_runtime:
-            return module.is_regular_module or issubclass(type(module), Module.Aggregate)
+        are_current_results_valid = not current_results.contains_invalid_result()
+        if are_current_results_valid:
+            if is_regular_runtime:
+                return module.is_regular_module or issubclass(type(module), Module.Aggregate)
+            else:
+                return not module.is_regular_module or issubclass(type(module), Module.Aggregate)
         else:
-            return not module.is_regular_module or issubclass(type(module), Module.Aggregate)
+            return False
 
     def _exposed_result(
         self,
@@ -168,7 +187,6 @@ class Graph:
             "request": request,
             "logger": logger,
         }
-
         if issubclass(type(module), Module.Aggregate):
             if is_regular_runtime:
                 if asyncio.iscoroutinefunction(module.aggregate):

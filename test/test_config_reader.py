@@ -270,7 +270,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
-        runtime = await pipeline.run()
+        runtime = (await pipeline.run())[0]
 
         assert 'depending-result' in runtime
         assert 'parent-result' in runtime
