@@ -87,8 +87,14 @@ class Graph:
         """
         results = results.copy()
         for module in self._modules:
-            if self._should_be_run(module=module, current_results=Module.ResultSet(results), is_regular_runtime=is_regular_runtime):
-                predecessors_data = Module.ResultSet([r for r in results if r.name in module.input_modules])
+            if self._should_be_run(
+                module=module,
+                current_results=Module.ResultSet(results),
+                is_regular_runtime=is_regular_runtime
+            ):
+                predecessors_data = Module.ResultSet(
+                    [r for r in results if r.name in module.input_modules]
+                )
                 logger = self._logger.chain(
                     module=MagdaLogger.Parts.Module(
                         name=module.name,

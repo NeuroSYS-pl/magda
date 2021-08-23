@@ -620,8 +620,6 @@ class TestSequentialPipeline:
         runtime = await self.pipeline.build()
 
         result, error = await runtime.run()
-        
+
         assert result is None
         assert isinstance(error, Exception)
-
-

@@ -392,7 +392,7 @@ class TestStatefulParallelPipeline:
         r2, _ = await pipeline.run('R2')
         agg1, _ = await pipeline.process('A1')
         r3, _ = await pipeline.run('R3')
-        agg2, _  = await pipeline.process('A1')
+        agg2, _ = await pipeline.process('A1')
 
         assert len(r1) == len(r2) == len(r3) == 3
         assert len(agg1['final']) == 2

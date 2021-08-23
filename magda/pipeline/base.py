@@ -30,9 +30,12 @@ class BasePipeline(metaclass=BasePipelineMeta):
             self._context = context
             self._shared_parameters = shared_parameters
 
-        def parse_results(self, results: Module.ResultSet) -> Tuple[Optional[Dict[str, Any]], Optional[Exception]]:
+        def parse_results(self, results: Module.ResultSet) -> Tuple[
+            Optional[Dict[str, Any]],
+            Optional[Exception]
+        ]:
             if results.contains_invalid_result():
-                raised_exception = results.collection[0] # Always only 1 exception possible
+                raised_exception = results.collection[0]  # Always only 1 exception possible
                 result_tuple = (None, raised_exception.error)
             else:
                 result_tuple = ({
