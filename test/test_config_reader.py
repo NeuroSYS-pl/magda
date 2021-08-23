@@ -300,7 +300,7 @@ class TestConfigReader:
             pass
 
         ModuleFactory.register('ModuleSample', ModuleSample)
-        incorrect_name = 8739
+        incorrect_name = ['test']
 
         config_file = self.get_config_file('correct_pipeline_name_in_config.yaml')
 
@@ -365,3 +365,23 @@ class TestConfigReader:
         assert 1 == len(pipeline.modules)
         assert pipeline.name is not None
         assert 'Pipeline-' in pipeline.name
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_assign_numeric_pipeline_name(self):
+
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        numeric_name = 5
+
+        config_file = self.get_config_file('no_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory, name=numeric_name)
+
+        assert 1 == len(pipeline.modules)
+        assert pipeline.name == numeric_name

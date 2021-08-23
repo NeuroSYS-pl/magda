@@ -1,4 +1,4 @@
-name: 123
+name: ['test']
 modules:
     - name: mod0
       type: ModuleSample

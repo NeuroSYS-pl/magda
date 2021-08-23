@@ -50,8 +50,11 @@ class ConfigReader:
 
         cls._check_expose_settings(modules)
 
-        if not name and config_pipeline_name:
-            name = config_pipeline_name
+        if name and config_pipeline_name:
+            warnings.warn('The pipeline name specified in config wil be overriden '
+                          'by ConfigReader.read parameter')
+
+        name = name or config_pipeline_name
 
         if name:
             cls._check_pipeline_name(name)
@@ -155,9 +158,9 @@ class ConfigReader:
 
     @staticmethod
     def _check_pipeline_name(name: str):
-        if not isinstance(name, str):
+        if not isinstance(name, (str, Number)):
             raise WrongParameterValueException(
-                "Parameter 'name' in config should accept string values only. "
+                "Parameter 'name' in config should accept strings or numbers only."
                 f"Found value: '{name}'."
             )
 
