@@ -315,7 +315,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_regular)
 
         runtime = await self.pipeline.build()
-        results = (await runtime.process())[0]
+        results, _ = await runtime.process()
 
         assert len(results) == 2
         assert 'regular' not in results
@@ -448,7 +448,7 @@ class TestSequentialPipeline:
         assert aggregate_runtime_module.state_size == 2
         assert aggregate_runtime_module.state == ['state', 'state']
 
-        results = (await runtime.process())[0]
+        results, _ = await runtime.process()
 
         assert 'after_agg' in results
         assert len(results['after_agg']) == 4

@@ -34,8 +34,7 @@ class ExampleSimpleSequential:
     async def run(self):
         # Run one job and measure duration
         start = time()
-        result = await self.pipeline.run(Request('R'))
-        result, err = result[0], result[1]
+        result, _ = await self.pipeline.run(Request('R'))
         end = time()
 
         # Close pipeline (and teardown modules)
