@@ -119,11 +119,11 @@ class TestMagdaLogger:
     @pytest.mark.parametrize(
         "log_method,level_part",
         [
-            ('info', LoggerConfig.Level.INFO.value),
-            ('debug', LoggerConfig.Level.INFO.value),
-            ('warn', LoggerConfig.Level.INFO.value),
-            ('critical', LoggerConfig.Level.INFO.value),
-            ('error', LoggerConfig.Level.INFO.value)
+            ('info', LoggerConfig.Level.INFO.name),
+            ('debug', LoggerConfig.Level.DEBUG.name),
+            ('warn', LoggerConfig.Level.WARNING.name),
+            ('critical', LoggerConfig.Level.CRITICAL.name),
+            ('error', LoggerConfig.Level.ERROR.name)
         ]
     )
     @patch('magda.utils.logger.logger.print')
