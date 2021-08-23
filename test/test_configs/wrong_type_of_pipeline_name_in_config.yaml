@@ -1,0 +1,4 @@
+name: 123
+modules:
+    - name: mod0
+      type: ModuleSample

@@ -32,6 +32,7 @@ class ConfigReader:
         config: str,
         module_factory: ModuleFactory,
         config_parameters: Optional[Dict] = None,
+        name: Optional[str] = None,
         context: Optional[Any] = None,
         shared_parameters: Optional[Dict] = None,
         *,
@@ -44,15 +45,21 @@ class ConfigReader:
 
         parsed_yaml = yaml.safe_load(config)
 
-        modules, shared_parameters, group_options = \
+        config_pipeline_name, modules, shared_parameters, group_options = \
             cls._extract_information_from_yaml(parsed_yaml, shared_parameters)
 
         cls._check_expose_settings(modules)
 
+        if not name and config_pipeline_name:
+            name = config_pipeline_name
+        
+        if name:
+            cls._check_pipeline_name(name)
+
         pipeline = (
-            ParallelPipeline()
+            ParallelPipeline(name=name)
             if any([m.group is not None for m in modules])
-            else SequentialPipeline()
+            else SequentialPipeline(name=name)
         )
 
         pipeline = cls._add_modules_to_pipeline(modules, pipeline, module_factory)
@@ -147,11 +154,23 @@ class ConfigReader:
                 )
 
     @staticmethod
+    def _check_pipeline_name(name: str):
+        if not isinstance(name, str):
+            raise WrongParameterValueException(
+                "Parameter 'name' in config should accept string values only. "
+                f"Found value: '{name}'."
+            )
+
+    @staticmethod
     def _extract_information_from_yaml(parsed_yaml, shared_parameters):
         try:
             modules = [ConfigReader.ConfigModule(**data) for data in parsed_yaml['modules']]
         except TypeError:
             raise Exception("Every module defined in a config file has to have a name and a type.")
+
+        pipeline_name = None
+        if 'name' in parsed_yaml:
+            pipeline_name = parsed_yaml['name']
 
         if 'shared_parameters' in parsed_yaml:
             shared_parameters = parsed_yaml['shared_parameters']
@@ -163,7 +182,7 @@ class ConfigReader:
                 for group in parsed_yaml['groups']
             }
 
-        return modules, shared_parameters, group_options
+        return pipeline_name, modules, shared_parameters, group_options
 
     @staticmethod
     def _add_modules_to_pipeline(modules, pipeline, module_factory):

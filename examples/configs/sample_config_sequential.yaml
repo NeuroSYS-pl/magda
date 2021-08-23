@@ -1,3 +1,4 @@
+name: ExemplarySequentialPipeline
 modules:
     - name: m1
       type: ModuleC
