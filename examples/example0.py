@@ -35,7 +35,6 @@ class ExampleSimpleSequential:
         # Run one job and measure duration
         start = time()
         result = await self.pipeline.run(Request('R'))
-        import ipdb; ipdb.set_trace()
         result, err = result[0], result[1]
         end = time()
 
