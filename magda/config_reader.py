@@ -168,9 +168,7 @@ class ConfigReader:
         except TypeError:
             raise Exception("Every module defined in a config file has to have a name and a type.")
 
-        pipeline_name = None
-        if 'name' in parsed_yaml:
-            pipeline_name = parsed_yaml['name']
+        pipeline_name = parsed_yaml.get('name')
 
         if 'shared_parameters' in parsed_yaml:
             shared_parameters = parsed_yaml['shared_parameters']
