@@ -84,9 +84,9 @@ class MagdaLogger:
 
         message_format = config.format
 
-        if (config.output == MagdaLogger.Config.Output.LOGGING
-           and LoggerConfig.Part.LEVEL in message_format):
-            message_format.remove(LoggerConfig.Part.LEVEL)
+        hidden_parts = []
+        if config.output == MagdaLogger.Config.Output.LOGGING:
+            hidden_parts.append(LoggerConfig.Part.LEVEL)
 
         parts = [
             MagdaLogger._parts_mapping[key].flush(
@@ -94,6 +94,7 @@ class MagdaLogger:
                 **kwargs,
             )
             for key in message_format
+            if key not in hidden_parts
         ]
 
         message = ' '.join([p for p in parts if p is not None])

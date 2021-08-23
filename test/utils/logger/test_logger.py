@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from magda.utils.logger import MagdaLogger
+from magda.utils.logger.config import LoggerConfig
 
 
 class PartialOutput(str):
@@ -118,11 +119,11 @@ class TestMagdaLogger:
     @pytest.mark.parametrize(
         "log_method,level_part",
         [
-            ('info', '[INFO]'),
-            ('debug', '[DEBUG]'),
-            ('warn', '[WARNING]'),
-            ('critical', '[CRITICAL]'),
-            ('error', '[ERROR]')
+            ('info', LoggerConfig.Level.INFO.value),
+            ('debug', LoggerConfig.Level.INFO.value),
+            ('warn', LoggerConfig.Level.INFO.value),
+            ('critical', LoggerConfig.Level.INFO.value),
+            ('error', LoggerConfig.Level.INFO.value)
         ]
     )
     @patch('magda.utils.logger.logger.print')

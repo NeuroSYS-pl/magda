@@ -21,7 +21,7 @@ class TestLevelPrinter:
             (LoggerConfig.Level.CRITICAL, Fore.RED)
         ]
     )
-    def test_should_print_correctly_any_level(self, level, expected_color):
+    def test_should_print_level_correctly(self, level, expected_color):
         printer = LevelPrinter()
         level = LoggerParts.Level(level)
         output = printer.flush(colors=True, level=level)
@@ -39,7 +39,7 @@ class TestLevelPrinter:
             LoggerConfig.Level.CRITICAL
         ]
     )
-    def test_should_log_any_level_without_color_if_set(self, level):
+    def test_should_log_level_without_color_if_set(self, level):
         printer = LevelPrinter()
         level = LoggerParts.Level(level)
         output = printer.flush(colors=False, level=level)
