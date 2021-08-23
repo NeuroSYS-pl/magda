@@ -4,6 +4,7 @@ import pytest
 from colorama import Fore, Style
 
 from magda.utils.logger.printers import *
+from magda.utils.logger.config import LoggerConfig
 from magda.utils.logger.parts import LoggerParts
 
 
@@ -71,14 +72,15 @@ class TestMessagePrinter:
     @pytest.mark.parametrize(
         "level,expected_color",
         [
-            (LoggerParts.Level.WARNING, Fore.YELLOW),
-            (LoggerParts.Level.ERROR, Fore.RED),
-            (LoggerParts.Level.DEBUG, Fore.GREEN),
-            (LoggerParts.Level.CRITICAL, Fore.RED)
+            (LoggerConfig.Level.WARNING, Fore.YELLOW),
+            (LoggerConfig.Level.ERROR, Fore.RED),
+            (LoggerConfig.Level.DEBUG, Fore.GREEN),
+            (LoggerConfig.Level.CRITICAL, Fore.RED)
         ]
     )
     def test_should_log_non_info_level_in_color(self, level, expected_color):
         printer = MessagePrinter()
+        level = LoggerParts.Level(level)
         base = 'TEST'
         message_formatted = expected_color + base + Fore.RESET
         output = printer.flush(colors=True, msg=base, is_event=False, level=level)
@@ -92,21 +94,22 @@ class TestMessagePrinter:
             colors=True,
             msg=base,
             is_event=False,
-            level=LoggerParts.Level.CRITICAL
+            level=LoggerParts.Level(LoggerConfig.Level.CRITICAL)
         )
         assert output.find(message_formatted) != -1
 
     @pytest.mark.parametrize(
         "level",
         [
-            LoggerParts.Level.WARNING,
-            LoggerParts.Level.ERROR,
-            LoggerParts.Level.DEBUG,
-            LoggerParts.Level.CRITICAL
+            LoggerConfig.Level.WARNING,
+            LoggerConfig.Level.ERROR,
+            LoggerConfig.Level.DEBUG,
+            LoggerConfig.Level.CRITICAL
         ]
     )
     def test_should_log_non_info_level_without_color_if_set(self, level):
         printer = MessagePrinter()
+        level = LoggerParts.Level(level)
         base = 'TEST'
         output = printer.flush(colors=False, msg=base, is_event=False, level=level)
         assert re.search(self.COLOR_REGEXP, output) is None

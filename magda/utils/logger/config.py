@@ -33,6 +33,13 @@ class LoggerConfig:
         STDOUT = auto()
         LOGGING = auto()
 
+    class Level(Enum):
+        INFO = auto()
+        WARNING = auto()
+        ERROR = auto()
+        DEBUG = auto()
+        CRITICAL = auto()
+
     enable: bool = True
     log_events: bool = True
     colors: bool = True

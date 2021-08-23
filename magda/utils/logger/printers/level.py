@@ -14,8 +14,11 @@ class LevelPrinter(BasePrinter):
     def flush(
         self,
         colors: bool,
-        level: LoggerParts.Level = LoggerParts.Level.INFO,
+        level: Optional[LoggerParts.Level] = None,
         **kwargs,
     ) -> Optional[str]:
-        text = f'{self.LEVEL_START_MARKER}{level.name}{self.LEVEL_END_MARKER}'
-        return with_log_level_colors(text, level) if colors else text
+        if level:
+            text = f'{self.LEVEL_START_MARKER}{level.value.name}{self.LEVEL_END_MARKER}'
+            return with_log_level_colors(text, level.value) if colors else text
+        else:
+            return None

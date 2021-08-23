@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Optional
 
+from .config import LoggerConfig
+
 
 class LoggerParts:
     @dataclass(frozen=True)
@@ -24,9 +26,6 @@ class LoggerParts:
     class Request:
         text: str
 
-    class Level(Enum):
-        INFO = auto()
-        WARNING = auto()
-        ERROR = auto()
-        DEBUG = auto()
-        CRITICAL = auto()
+    @dataclass(frozen=True)
+    class Level:
+        value: LoggerConfig.Level

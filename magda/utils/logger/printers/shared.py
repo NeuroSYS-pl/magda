@@ -1,22 +1,18 @@
+from typing import Optional
 from colorama import Fore, Style
+from ..config import LoggerConfig
 
-from ..parts import LoggerParts
+_default = (Fore.WHITE, Style.NORMAL)
+_mapping = {
+  LoggerConfig.Level.DEBUG: (Fore.GREEN, Style.NORMAL),
+  LoggerConfig.Level.WARNING: (Fore.YELLOW, Style.NORMAL),
+  LoggerConfig.Level.ERROR: (Fore.RED, Style.NORMAL),
+  LoggerConfig.Level.CRITICAL: (Fore.RED, Style.BRIGHT),
+}
 
 
-def with_log_level_colors(text: str, level: LoggerParts.Level) -> str:
-    style = Style.NORMAL
-
-    if level == LoggerParts.Level.DEBUG:
-        color = Fore.GREEN
-    elif level == LoggerParts.Level.WARNING:
-        color = Fore.YELLOW
-    elif level == LoggerParts.Level.ERROR:
-        color = Fore.RED
-    elif level == LoggerParts.Level.CRITICAL:
-        color = Fore.RED
-        style = Style.BRIGHT
-    else:
-        color = Fore.WHITE
+def with_log_level_colors(text: str, level: Optional[LoggerConfig.Level]) -> str:
+    color, style = _mapping[level] if level in _mapping else _default
     return (
         style + color
         + text

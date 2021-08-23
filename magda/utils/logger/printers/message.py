@@ -23,10 +23,11 @@ class MessagePrinter(BasePrinter):
         colors: bool,
         msg: str = None,
         is_event: bool = False,
-        level: LoggerParts.Level = LoggerParts.Level.INFO,
+        level: Optional[LoggerParts.Level] = None,
         **kwargs,
     ) -> Optional[str]:
         if is_event:
             text = f'{self.EVENT_START_MARKER}{msg}{self.EVENT_END_MARKER}'
             return self._with_event_colors(text) if colors else text
-        return with_log_level_colors(msg, level) if colors else msg
+        level_value = level.value if level else None
+        return with_log_level_colors(msg, level_value) if colors else msg

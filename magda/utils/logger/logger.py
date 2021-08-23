@@ -39,28 +39,30 @@ class MagdaLogger:
     def __init__(self, callback: Optional[Callable[[str, Any], None]] = None) -> None:
         self._callback = callback
 
-    def log_message(self, msg: str, level: LoggerParts.Level) -> None:
+    def log_message(self, msg: str, level: LoggerConfig.Level) -> None:
         if self._callback:
+            level = LoggerParts.Level(level)
             self._callback(msg=msg, is_event=False, level=level)
 
     def info(self, msg: str) -> None:
-        self.log_message(msg=msg, level=LoggerParts.Level.INFO)
+        self.log_message(msg=msg, level=LoggerConfig.Level.INFO)
 
     def error(self, msg: str) -> None:
-        self.log_message(msg=msg, level=LoggerParts.Level.ERROR)
+        self.log_message(msg=msg, level=LoggerConfig.Level.ERROR)
 
     def debug(self, msg: str) -> None:
-        self.log_message(msg=msg, level=LoggerParts.Level.DEBUG)
+        self.log_message(msg=msg, level=LoggerConfig.Level.DEBUG)
 
     def critical(self, msg: str) -> None:
-        self.log_message(msg=msg, level=LoggerParts.Level.CRITICAL)
+        self.log_message(msg=msg, level=LoggerConfig.Level.CRITICAL)
 
     def warn(self, msg: str) -> None:
-        self.log_message(msg=msg, level=LoggerParts.Level.WARNING)
+        self.log_message(msg=msg, level=LoggerConfig.Level.WARNING)
 
     def event(self, msg: str) -> None:
+        level = LoggerParts.Level(LoggerConfig.Level.INFO)
         if self._callback:
-            self._callback(msg=msg, is_event=True)
+            self._callback(msg=msg, is_event=True, level=level)
 
     def chain(self, *args, **kwargs) -> MagdaLogger:
         return (
@@ -75,7 +77,7 @@ class MagdaLogger:
     ) -> None:
         is_event = kwargs.get('is_event', False)
 
-        level = kwargs.get('level', LoggerParts.Level.INFO)
+        level = kwargs.get('level', LoggerParts.Level(LoggerConfig.Level.INFO))
 
         if not config.enable or (not config.log_events and is_event):
             return
@@ -99,13 +101,13 @@ class MagdaLogger:
         if config.output == MagdaLogger.Config.Output.STDOUT:
             print(message)
         elif config.output == MagdaLogger.Config.Output.LOGGING:
-            if level == LoggerParts.Level.DEBUG:
+            if level.value == LoggerConfig.Level.DEBUG:
                 getLogger('magda.runtime').debug(message)
-            elif level == LoggerParts.Level.ERROR:
+            elif level.value == LoggerConfig.Level.ERROR:
                 getLogger('magda.runtime').error(message)
-            elif level == LoggerParts.Level.WARNING:
+            elif level.value == LoggerConfig.Level.WARNING:
                 getLogger('magda.runtime').warn(message)
-            elif level == LoggerParts.Level.CRITICAL:
+            elif level.value == LoggerConfig.Level.CRITICAL:
                 getLogger('magda.runtime').critical(message)
             else:
                 getLogger('magda.runtime').info(message)
