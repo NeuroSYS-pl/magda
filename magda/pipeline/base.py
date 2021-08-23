@@ -35,7 +35,7 @@ class BasePipeline(metaclass=BasePipelineMeta):
             Optional[Exception]
         ]:
             if results.contains_invalid_result():
-                raised_exception = results.collection[0]  # Always only 1 exception possible
+                raised_exception = results.get_error_if_exists()
                 result_tuple = (None, raised_exception.error)
             else:
                 result_tuple = ({

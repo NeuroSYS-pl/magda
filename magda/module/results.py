@@ -89,4 +89,16 @@ class ResultSet:
         return results[0]
 
     def contains_invalid_result(self) -> bool:
+        """ Returns whether there exists a Module Result that resulted in an exception """
         return any([res for res in self._collection if not res.isSuccessful()])
+
+    def get_error_if_exists(self) -> Result:
+        """ Returns a Result if any Module resulted in an exception,
+        or returns None if there is no error Results.
+        """
+        if self.contains_invalid_result():
+            for result in self.collection:
+                if not result.isSuccessful():
+                    return result
+        else:
+            return None
