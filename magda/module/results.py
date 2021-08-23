@@ -96,9 +96,4 @@ class ResultSet:
         """ Returns a Result if any Module resulted in an exception,
         or returns None if there is no error Results.
         """
-        if self.contains_invalid_result():
-            for result in self.collection:
-                if not result.isSuccessful():
-                    return result
-        else:
-            return None
+        return next((result for result in self.collection if not result.isSuccessful()), None)
