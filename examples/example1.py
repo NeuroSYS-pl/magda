@@ -62,7 +62,7 @@ class ExampleSequential:
         print('Results:')
         for index, result in enumerate(results):
             print(f' {index}:')
-            for key, value in result.items():
+            for key, value in result[0].items():
                 print(f'  {key}\t → {value}')
 
 
