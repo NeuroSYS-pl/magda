@@ -82,7 +82,7 @@ class TestContext:
         assert pipeline.modules[0].context == context
         assert pipeline.modules[0].context == pipeline.modules[1].context
 
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert results['m2'] == context
 
     @pytest.mark.parametrize('context', noncallable_contexts)
@@ -97,7 +97,7 @@ class TestContext:
 
         assert pipeline.context == context
         assert pipeline.modules[0].context == pipeline.modules[1].context
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert results['m2'] == context
 
     @pytest.mark.parametrize('context,param', object_contexts)
@@ -115,7 +115,7 @@ class TestContext:
         assert pipeline.modules[0].context == pipeline.modules[1].context
         assert pipeline.modules[0].context.param == param
 
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert results['m2'] == context
 
     @pytest.mark.parametrize('context,param', object_contexts)
@@ -129,7 +129,7 @@ class TestContext:
         pipeline = await builder.build(context)
 
         assert pipeline.context.param == param
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert results['m2'].param == param
 
     @pytest.mark.parametrize('context,context_type', callable_contexts)
@@ -145,7 +145,7 @@ class TestContext:
         assert pipeline.context == context
         assert isinstance(pipeline.modules[0].context, context_type)
 
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert isinstance(results['m2'], context_type)
 
     @pytest.mark.parametrize('context,context_type', callable_contexts)
@@ -159,5 +159,5 @@ class TestContext:
         pipeline = await builder.build(context)
 
         assert pipeline.context == context
-        results = (await pipeline.run())[0]
+        results, _ = await pipeline.run()
         assert isinstance(results['m2'], context_type)

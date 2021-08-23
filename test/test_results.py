@@ -48,7 +48,7 @@ class TestResults:
         self.builder.add_module(self.mod_d1)
         self.builder.add_module(self.mod_d2.depends_on(self.mod_c).depends_on(self.mod_d1))
         pipeline = await self.builder.build([1, 2, 3])
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d1'].of('mod_c') == []
         assert runtime['mod_d2'].of('mod_c') == [[1, 2, 3]]
@@ -64,7 +64,7 @@ class TestResults:
         self.builder.add_module(self.mod_d1)
         self.builder.add_module(self.mod_d2.depends_on(self.mod_c).depends_on(self.mod_d1))
         pipeline = await self.builder.build([1, 2, 3])
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d1'].of(MockModuleContext) == []
         assert runtime['mod_d2'].of(MockModuleContext) == [[1, 2, 3]]
@@ -77,7 +77,7 @@ class TestResults:
         self.builder.add_module(self.mod_c)
         self.builder.add_module(self.mod_d1.depends_on(self.mod_c))
         pipeline = await self.builder.build([1, 2, 3])
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d1'].collection
         assert runtime['mod_d1'].collection is not runtime['mod_d1']._collection
@@ -91,7 +91,7 @@ class TestResults:
         self.builder.add_module(self.mod_c)
         self.builder.add_module(self.mod_d1.depends_on(self.mod_c))
         pipeline = await self.builder.build('abc')
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d1'].has(MockModuleContext)
         with pytest.raises(KeyError):
@@ -105,7 +105,7 @@ class TestResults:
         self.builder.add_module(self.mod_c)
         self.builder.add_module(self.mod_d1.depends_on(self.mod_c))
         pipeline = await self.builder.build('abc')
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d1'].of(MockModuleContext) == ['abc']
         with pytest.raises(KeyError):
@@ -122,7 +122,7 @@ class TestResults:
             .depends_on(self.mod_d2)
         )
         pipeline = await self.builder.build('abc')
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert runtime['mod_d3'].has(MockModuleData)
         with pytest.raises(Exception):
@@ -148,7 +148,7 @@ class TestResults:
             .depends_on(self.builder.get_module('mod_i1'))
         )
         pipeline = await self.builder.build()
-        runtime = (await pipeline.run())[0]
+        runtime, _ = await pipeline.run()
 
         assert not runtime['mod_i1'].has(MockCorrectInterface)
         assert runtime['mod_i2'].has(MockCorrectInterface)

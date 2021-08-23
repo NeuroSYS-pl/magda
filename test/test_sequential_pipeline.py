@@ -59,7 +59,7 @@ class TestSequentialPipeline:
     async def test_pipeline_run_no_modules(self):
         assert len(self.pipeline.modules) == 0
         runtime = await self.pipeline.build(MockContext())
-        result = (await runtime.run())[0]
+        result, _ = await runtime.run()
         assert isinstance(result, dict)
         assert len(result) == 0
 
@@ -68,7 +68,7 @@ class TestSequentialPipeline:
         module = MockModule('MockName').expose_result()
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build(MockContext())
-        results = (await runtime.run())[0]
+        results, _ = await runtime.run()
 
         assert isinstance(results, dict)
         assert len(results) == 1
@@ -272,7 +272,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_regular)
 
         runtime = await self.pipeline.build()
-        results = (await runtime.run())[0]
+        results, _ = await runtime.run()
 
         assert len(results) == 2
         assert 'regular' in results
@@ -490,7 +490,7 @@ class TestSequentialPipeline:
 
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build()
-        results = (await runtime.run())[0]
+        results, _ = await runtime.run()
 
         assert 'module_with_params' in results
         assert results['module_with_params'] == parameters
@@ -525,7 +525,7 @@ class TestSequentialPipeline:
 
         shared_parameters = {'shared_param1': 1}
         runtime = await self.pipeline.build(shared_parameters=shared_parameters)
-        results = (await runtime.run())[0]
+        results, _ = await runtime.run()
 
         assert len(results) == 2
         assert 'module_with_params' in results
@@ -537,7 +537,7 @@ class TestSequentialPipeline:
         module = MockModule('mock_name').expose_result()
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build()
-        results = (await runtime.run())[0]
+        results, _ = await runtime.run()
 
         assert 'mock_name' in results
         assert results['mock_name'] == 'output'
@@ -619,9 +619,9 @@ class TestSequentialPipeline:
 
         runtime = await self.pipeline.build()
 
-        result = await runtime.run()
+        result, error = await runtime.run()
         
-        assert result[0] is None
-        assert isinstance(result[1], Exception)
+        assert result is None
+        assert isinstance(error, Exception)
 
 
