@@ -300,15 +300,14 @@ class TestConfigReader:
             pass
 
         ModuleFactory.register('ModuleSample', ModuleSample)
-        incorrect_name=8739
+        incorrect_name = 8739
 
         config_file = self.get_config_file('correct_pipeline_name_in_config.yaml')
-        
+
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
                 await ConfigReader.read(config, ModuleFactory, name=incorrect_name)
-
 
     @pytest.mark.asyncio
     async def test_should_correctly_assign_pipeline_name_from_config(self):
@@ -343,7 +342,7 @@ class TestConfigReader:
 
         with open(config_file) as config:
             config = config.read()
-            pipeline = await ConfigReader.read(config, ModuleFactory, name = overriding_name)
+            pipeline = await ConfigReader.read(config, ModuleFactory, name=overriding_name)
 
         assert 1 == len(pipeline.modules)
         assert overriding_name == pipeline.name
@@ -364,5 +363,5 @@ class TestConfigReader:
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
         assert 1 == len(pipeline.modules)
-        assert None != pipeline.name
+        assert pipeline.name is not None
         assert 'Pipeline-' in pipeline.name

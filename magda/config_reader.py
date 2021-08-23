@@ -52,7 +52,7 @@ class ConfigReader:
 
         if not name and config_pipeline_name:
             name = config_pipeline_name
-        
+
         if name:
             cls._check_pipeline_name(name)
 
