@@ -17,6 +17,8 @@ modules:
 shared_parameters:
   threshold: ${THRESHOLD}
 
+name: SampleName
+
 groups:
   - name: ${group_name}
     options:

@@ -1,3 +1,4 @@
+name: ExemplaryParallelPipeline
 modules:
   - name: m1
     type: ModuleC

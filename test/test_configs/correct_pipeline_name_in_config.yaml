@@ -1,0 +1,4 @@
+name: TestPipeline
+modules:
+    - name: mod0
+      type: ModuleSample

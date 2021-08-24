@@ -277,3 +277,111 @@ class TestConfigReader:
         assert 'should-be-overridden' not in runtime
         assert runtime['depending-result'].data == 'depending'
         assert runtime['parent-result'].data == 'parent'
+
+    @pytest.mark.asyncio
+    async def test_should_raise_error_on_incorrect_name_in_config(self):
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        config_file = self.get_config_file('wrong_type_of_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory)
+
+    @pytest.mark.asyncio
+    async def test_should_raise_error_on_incorrect_name_specified_directly(self):
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+        incorrect_name = ['test']
+
+        config_file = self.get_config_file('correct_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory, name=incorrect_name)
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_assign_pipeline_name_from_config(self):
+
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        config_file = self.get_config_file('correct_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory)
+
+        assert 1 == len(pipeline.modules)
+        assert 'TestPipeline' == pipeline.name
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_override_assigned_pipeline_name(self):
+
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        overriding_name = 'OverridingName'
+
+        config_file = self.get_config_file('correct_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory, name=overriding_name)
+
+        assert 1 == len(pipeline.modules)
+        assert overriding_name == pipeline.name
+
+    @pytest.mark.asyncio
+    async def test_should_have_not_empty_pipeline_name_when_none_assigned(self):
+
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        config_file = self.get_config_file('no_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory)
+
+        assert 1 == len(pipeline.modules)
+        assert pipeline.name is not None
+        assert 'Pipeline-' in pipeline.name
+
+    @pytest.mark.asyncio
+    async def test_should_correctly_assign_numeric_pipeline_name(self):
+
+        @finalize
+        class ModuleSample(Module.Runtime):
+            pass
+
+        ModuleFactory.register('ModuleSample', ModuleSample)
+
+        numeric_name = 5
+
+        config_file = self.get_config_file('no_pipeline_name_in_config.yaml')
+
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory, name=numeric_name)
+
+        assert 1 == len(pipeline.modules)
+        assert pipeline.name == numeric_name
