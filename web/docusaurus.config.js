@@ -15,7 +15,7 @@ module.exports = {
   projectName: 'magda',
   themeConfig: {
     navbar: {
-      title: 'MAGDA',
+      title: 'MAGDA 👧',
       // TODO: Add logo
       // logo: {
       //   alt: 'MAGDA Logo',
