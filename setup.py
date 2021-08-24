@@ -6,7 +6,7 @@ with open('README.md', 'r') as f:
 dependencies = [
     'colorama>=0.4,<1',
     'pyyaml>=5.3.1,<6',
-    'ray>=1.2.0,<2',
+    'ray[default]>=1.5.2,<2',
 ]
 
 test_dependencies = [

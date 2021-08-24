@@ -3,7 +3,7 @@ from __future__ import annotations
 from colorama import Fore
 from datetime import datetime
 
-from .base import BasePrinter
+from magda.utils.logger.printers.base import BasePrinter
 
 
 class TimestampPrinter(BasePrinter):

@@ -32,6 +32,7 @@ class ExampleSimpleSequentialConfigReader:
             self.pipeline = await ConfigReader.read(
                 config,
                 ModuleFactory,
+                name='CustomName',
                 config_parameters=config_params,
                 context=lambda: Context(prefix),
                 logger=MagdaLogger.Config(),
