@@ -6,6 +6,12 @@ sidebar_position: 4
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+import FlowSvg from '../assets/stateful/stateful-stateless.svg';
+import Example1Svg from '../assets/stateful/01.svg';
+import Example2Svg from '../assets/stateful/02.svg';
+import Example3Svg from '../assets/stateful/03.svg';
+
+
 # Stateless vs. stateful processing
 
 So far only regular stateless modules were described. Stateless because they don't store any data between requests. Even though they have their advantages, sometimes there is a need to remember some information after every `pipeline.run` excecution.
@@ -63,12 +69,7 @@ Aggregation modules pass their state to the succeeding regular modules (the purp
 
 Diagram presents a simplified example of a pipeline consisting of both regular and aggregation modules.
 
-<img
-  src={require('../../static/img/stateful/stateful_stateless.png').default}
-  alt="Exemplary diagram"
-  className="diagram"
-  width="50%"
-/>
+<FlowSvg className="diagram" width="50%" />
 
 
 ## `ModuleAggregate` usage
@@ -224,12 +225,7 @@ Process: {'agg_mod': [440]}
 ```
 As mentioned before, the aggregation module clears its state after every process mode. We can see that the second `pipeline.process` outputs a list with only one element (not three) - the output of the regular module which was obtained during the last `pipeline.run(40)`. This behavior is also visibly shown in the diagram below.
 
-<img 
-  src={require('../../static/img/stateful/example_01.png').default}
-  alt="Example 1 - multiple run and process modes"
-  className="diagram"
-  width="50%"
-/>
+<Example1Svg className="diagram" width="50%" />
 
 
 ## Example 2 - overriding the `process` method
@@ -251,12 +247,7 @@ Process: {'agg_mod': 330}
 
 We can also visualize this behavior using a diagram.
 
-<img 
-  src={require('../../static/img/stateful/example_02.png').default}
-  alt="Example 2"
-  className="diagram"
-  width="50%"
-/>
+<Example2Svg className="diagram" width="50%" />
 
 
 ## Example 3 - overriding both `aggregate` and `process` methods
@@ -325,11 +316,7 @@ Our `AggregationModule` can now pass its output to some other module which would
 ```python
 Process: {'agg_mod': ItemsSum(330)}
 ```
+
 We can visualize this example in a diagram as well.
 
-<img
-  src={require('../../static/img/stateful/example_03.png').default}
-  alt="Example 3"
-  className="diagram"
-  width="50%"
-/>
+<Example3Svg className="diagram" width="50%" />
