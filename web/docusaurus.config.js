@@ -33,11 +33,11 @@ module.exports = {
           position: 'left',
           label: 'Examples',
         },
-        // {
-        //   to: 'api',
-        //   position: 'left',
-        //   label: 'API',
-        // },
+        {
+          type: 'docsVersionDropdown',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
+        },
         {
           href: 'https://github.com/NeuroSYS-pl/magda',
           label: 'GitHub',
@@ -47,44 +47,6 @@ module.exports = {
     },
     footer: {
       style: 'dark',
-      // TODO: Add links
-      // links: [
-      //   {
-      //     title: 'Docs',
-      //     items: [
-      //       {
-      //         label: 'Tutorial',
-      //         to: '/docs/intro',
-      //       },
-      //     ],
-      //   },
-      //   {
-      //     title: 'API',
-      //     items: [
-      //       {
-      //         label: 'Module',
-      //         to: '/docs/api/module',
-      //       },
-      //       {
-      //         label: 'Pipeline',
-      //         to: '/docs/api/pipeline',
-      //       },
-      //       {
-      //         label: 'Config',
-      //         to: '/docs/api/config',
-      //       },
-      //     ],
-      //   },
-      //   {
-      //     title: 'More',
-      //     items: [
-      //       {
-      //         label: 'GitHub',
-      //         href: 'https://github.com/NeuroSYS-pl/magda',
-      //       },
-      //     ],
-      //   },
-      // ],
       logo: {
         alt: 'NeuroSYS',
         src: 'https://neurosys.com/wp-content/themes/neurosys/static/images/logo-white.svg',
