@@ -118,8 +118,7 @@ class Graph:
                         )
                     )
                 except Exception as e:
-                    # TODO: Change to logger.error(e)
-                    logger.info(f"Module {module.name} has failed. Stopping the pipeline")
+                    logger.error(e)
                     results.append(
                         Module.Result(
                             result=None,
