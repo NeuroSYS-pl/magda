@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import Optional
 from colorama import Fore, Style
 
-from ..parts import LoggerParts
-from .base import BasePrinter
-from .shared import with_log_level_colors
+from magda.utils.logger.parts import LoggerParts
+from magda.utils.logger.printers.base import BasePrinter
+from magda.utils.logger.printers.shared import with_log_level_colors
 
 
 class MessagePrinter(BasePrinter):

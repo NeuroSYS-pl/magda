@@ -4,7 +4,7 @@ from typing import Optional
 from colorama import Fore
 
 from magda.utils.logger.parts import LoggerParts
-from .base import BasePrinter
+from magda.utils.logger.printers.base import BasePrinter
 
 
 class RequestPrinter(BasePrinter):

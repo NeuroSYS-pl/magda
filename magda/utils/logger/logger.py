@@ -3,9 +3,9 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Callable, Optional, Type
 
-from .config import LoggerConfig
-from .parts import LoggerParts
-from .printers import *
+from magda.utils.logger.config import LoggerConfig
+from magda.utils.logger.parts import LoggerParts
+from magda.utils.logger.printers import *
 
 
 class MagdaLogger:

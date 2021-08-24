@@ -1,3 +1,3 @@
-from .logger import MagdaLogger
+from magda.utils.logger import MagdaLogger
 
 __all__ = ['MagdaLogger']

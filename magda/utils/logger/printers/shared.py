@@ -1,6 +1,7 @@
 from typing import Optional
 from colorama import Fore, Style
-from ..config import LoggerConfig
+
+from magda.utils.logger.config import LoggerConfig
 
 _default = (Fore.WHITE, Style.NORMAL)
 _mapping = {
