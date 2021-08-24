@@ -170,7 +170,7 @@ class ModuleIncorrectAnotherSample(Module.Runtime):
 
 ## A correct advanced example
 
-Below you can find a more complicated, correct example for an imaginary pipeline of making a *Caffè Americano*. For details and questions related to accessing results from concrete modules by their interfaces, refer to [Modules](module).
+Below you can find a more complicated, correct example for an imaginary pipeline of making a *Caffè Americano*. For details and questions related to accessing results from concrete modules by their interfaces, refer to [Modules](./module.md).
 
 ```python
 from magda.decorators import register, finalize, accept, produce, expose

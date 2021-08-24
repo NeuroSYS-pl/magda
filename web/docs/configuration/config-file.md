@@ -3,6 +3,12 @@ title: Config File
 sidebar_position: 1
 ---
 
+import Example1Svg from '../assets/config-file/01.svg';
+import Example2Svg from '../assets/config-file/02.svg';
+import Example3Svg from '../assets/config-file/03.svg';
+import Example4Svg from '../assets/config-file/04.svg';
+
+
 # Configuration File
 
 When the modules are implemented, a pipeline can be created in one of two ways: from code or using a configuration file (called *config*). This page documents pipeline creation using the second way.
@@ -86,12 +92,7 @@ Option | Required   | Note
 
 ### Sequential pipeline
 
-<img
-  src={require('../../static/img/configuration/01_example.png').default}
-  alt="Sequential Pipeline"
-  className="diagram"
-  width="50%"
-/>
+<Example1Svg className="diagram" width="40%" />
 
 ```yaml title="sequential.config.yml"
 modules:
@@ -124,12 +125,7 @@ There are also some `shared_parameters` added which are accessible from every mo
 
 ### Sequential pipeline with aggregation module
 
-<img
-  src={require('../../static/img/configuration/02_example.png').default}
-  alt="Sequential Aggregated Pipeline"
-  className="diagram"
-  width="50%"
-/>
+<Example2Svg className="diagram" width="40%" />
 
 ```yaml title="aggregated.config.yml"
 modules:
@@ -159,12 +155,7 @@ In this example `mod_a` output is an input to the two consecutive modules. Modul
 
 ### Parallel pipeline with aggregation module
 
-<img
-  src={require('../../static/img/configuration/03_example.png').default}
-  alt="Parallel Pipeline"
-  className="diagram"
-  width="65%"
-/>
+<Example3Svg className="diagram" width="75%" />
 
 ```yaml title="parallel.config.yml"
 modules:
@@ -215,12 +206,7 @@ But in a parallel pipeline, the `group` parameter is mandatory. For `group_2` th
 
 ### ParallelPool with aggregation module
 
-<img
-  src={require('../../static/img/configuration/04_example_v2.png').default}
-  alt="Parallel Actor Pool Pipeline"
-  className="diagram"
-  width="65%"
-/>
+<Example4Svg className="diagram" width="75%" />
 
 ```yaml title="parallel-actor-pool.config.yml"
 modules:

@@ -4,6 +4,14 @@ title: What is MAGDA?
 sidebar_position: 1
 ---
 
+import SequentialStateless from './assets/home/sequential-stateless.svg';
+import SequentialStateful from './assets/home/sequential-stateful.svg';
+import ParallelStateless from './assets/home/parallel-stateless.svg';
+import ParallelStateful from './assets/home/parallel-stateful.svg';
+import ActorPoolStateless from './assets/home/actor-pool-stateless.svg';
+import ActorPoolStateful from './assets/home/actor-pool-stateful.svg';
+
+
 # What is MAGDA?
 
 *MAGDA* is a Python library intended for assembling a stream-like architecture of an application following functional programming principles, by using predefined interfaces and classes. *MAGDA* stands for Modular and Asynchronous Graphs with Directed and Acyclic edges, and is the backbone of the library. The library works best when the code can be split into independent operations with clearly defined input and outputs (modules). The main idea is to use *MAGDA* to process code in a stream-like flow. Think of this as nodes with input/output as edges in directed graphs.
@@ -18,6 +26,7 @@ sidebar_position: 1
 
 
 ## Exemplary use case
+
 <!-- <img src="images/overview/usecase.png" alt="sequential_agg_pipeline" /> -->
 | TODO: Diagram |
 | :---: |
@@ -56,12 +65,11 @@ Each module defines its ancestors creating a dependency relationship. A module m
 
 Each of the pipeline scenarios enclosed below has a separate section in this documentation, devoted to describing it in detail.
 
-<img
-  src={require('../static/img/overview/possibilities.png').default}
-  alt="Sequential Aggregated Pipeline"
-  className="diagram"
-  width="100%"
-/>
+| | Stateless | Stateful |
+|:--:|:--:|:--:|
+| **Sequential** | <SequentialStateless className="diagram" width="100%" /> | <SequentialStateful className="diagram" width="100%" /> |
+| **Parallel** | <ParallelStateless className="diagram" width="100%" /> | <ParallelStateful className="diagram" width="100%" /> |
+| **Parallel Actor Pool** | <ActorPoolStateless className="diagram" width="100%" /> | <ActorPoolStateful className="diagram" width="100%" /> |
 
 ### Sequential, Parallel, and ParallelPool pipelines
  

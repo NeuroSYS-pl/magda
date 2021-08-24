@@ -13,9 +13,11 @@ For instance, collecting statistics. This can't be achieved without storing resu
 
 
 ## Pipeline modes
+
 The pipeline can work in one of two modes: **run** or **process**. 
 
 ### Auxiliary notions
+
 Before discussing any more complex pipelines, let's define a few commonly used terms:
 
 - **Regular module**  
@@ -28,6 +30,7 @@ Before discussing any more complex pipelines, let's define a few commonly used t
 
 
 ### Run mode
+
 The run mode calls the `run` method in every regular module and passes an output of each module as an input to the next one.
 Since regular modules are stateless there is no way to keep their results after each request. Hence the need for the aggregation modules. They are the ones that keep the state and aim to collect outputs of preceding modules.
 The method that is responsible for adding data to an internal state in aggregation modules is `aggregate`.
@@ -42,6 +45,7 @@ What's important is that all regular modules that succeed aggregation modules (t
 
 
 ### Process mode
+
 The `process` mode is used to process results aggregated during the `run` mode. All regular modules that precede the aggregation modules (the yellow ones) are omitted in this mode.  
 The first modules to run are the aggregation modules which pass their full state (all of the previously aggregated results) to the following modules. To achieve that they invoke the `process` method.
 It's worth noting that once called, this method **clears the aggregation module's inner state**. It means that invoking `pipeline.process` twice in a row doesn't make much sense as during the second call aggregation modules won't have any data to pass forward.
@@ -56,6 +60,7 @@ Aggregation modules pass their state to the succeeding regular modules (the purp
 
 
 ## Exemplary diagram
+
 Diagram presents a simplified example of a pipeline consisting of both regular and aggregation modules.
 
 <img
@@ -67,9 +72,11 @@ Diagram presents a simplified example of a pipeline consisting of both regular a
 
 
 ## `ModuleAggregate` usage
+
 The capabilities of aggregation modules are presented below with simple examples, which show multiple ways in which they can be used. But first, let's declare some common code.
 
 ### Common code
+
 First, it's necessary to declare module classes. Supposing that, the pipeline consists of only two modules: one regular module and one aggregation module.
 The regular module returns the value of its parameter `val` multiplied by the request - the value passed during `pipeline.run(request)` invocation.
 
@@ -99,10 +106,9 @@ The next step is to build a pipeline. For simplicity, a sequential pipeline whic
     {label: "Config-first", value: "config"},
   ]}
 >
-  <TabItem value="code">
-  <>
+<TabItem value="code">
 
-``` python
+```python
 from magda.pipeline import SequentialPipeline
 
 reg_mod = RegularModule('reg_mod').set_parameters({'val': 11})
@@ -114,10 +120,8 @@ builder.add_module(agg_mod)
 pipeline = builder.build()
 ```
 
-  </>
-  </TabItem>
-  <TabItem value="config">
-  <>
+</TabItem>
+<TabItem value="config">
 
 ```yaml
 modules:
@@ -142,8 +146,7 @@ ModuleFactory.register('aggregation-module', AggregationModule)
 pipeline = ConfigReader.read(config_file_path, ModuleFactory)
 ```
 
-  </>
-  </TabItem>
+</TabItem>
 </Tabs>
 
 The `reg_mod` has an additional parameter called `val`. It outputs its value multiplied by the request value which is passed as an input to the aggregation module.
@@ -163,6 +166,7 @@ In the examples below the only code fragment that changes is the declaration of 
 
 
 ### Small simplification
+
 Before we run the first example let's look at the output of our aggregation module:
 
 ```python
@@ -185,6 +189,7 @@ On this account, we'll stick to this small "simplification" in all the following
 
 
 ## Example 1 - the original implementation
+
 The aggregation module collects its inputs in its inner state during run modes and passes the state further during process mode (clearing it). If we run the above code we'll get the output we just saw:
 
 ```python
@@ -192,6 +197,7 @@ Process: {'agg_mod': [110, 220]}
 ```
 
 ### Running the pipeline differently
+
 Using this simple example we are dealing with right now, we can additionally show how the pipeline (and the modules) behaves when we call `pipeline.run` and `pipeline.process` multiple times. Let's assume just for a moment that we invoke this code fragment:
 
 ```python
@@ -227,6 +233,7 @@ As mentioned before, the aggregation module clears its state after every process
 
 
 ## Example 2 - overriding the `process` method
+
 The aggregation module can not only serve to collect data and pass it further. It's only its basic implementation. It can also process its inputs. To achieve that we can override the `process` method:
 
 ```python
@@ -253,6 +260,7 @@ We can also visualize this behavior using a diagram.
 
 
 ## Example 3 - overriding both `aggregate` and `process` methods
+
 What if we would like to take full advantage of the aggregation module? We may not need to store all data within the module's inner state meaning that our `aggregate` method could behave like a reduce operation:
 
 ```python

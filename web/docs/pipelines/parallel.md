@@ -6,6 +6,13 @@ sidebar_position: 2
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+import FlowSvg from '../assets/parallel/flow.svg';
+import SimpleSvg from '../assets/parallel/simple.svg';
+import SimpleTimelineSvg from '../assets/parallel/simple-timeline.svg';
+import ResourcesSvg from '../assets/parallel/resources.svg';
+import ResourcesTimelineSvg from '../assets/parallel/resources-timeline.svg';
+
+
 # Parallel Pipeline
 
 The second type of pipeline (besides the *sequential pipeline*) is a *parallel pipeline*. Its main goal is optimization by setting up some *parts* of the flow to be processed in parallel.
@@ -34,12 +41,7 @@ Group can be identified as an [Actor](https://docs.ray.io/en/latest/actors.html)
 Each group determines its dependencies (the *starting condition*). It is the list of all modules on which that group modules **depend on** and are **not within** the same group. In simple words: all links to the group's modules, which starts outside that group.
 A group starts processing as soon as results from all preceding modules are available.
 
-<img
-  src={require('../../static/img/parallel/flow.png').default}
-  alt="Flow"
-  className="diagram"
-  width="25%"
-/>
+<FlowSvg className="diagram" width="25%" />
 
 As seen above, groups *g1* and *g2* don't have any dependencies.
 It means that their starting conditions are already fulfilled and they can immediately begin processing.
@@ -170,21 +172,11 @@ class ExampleModule(Module.Runtime):
 
 ### Simple parallel pipeline
 
-<img
-  src={require('../../static/img/parallel/simple.png').default}
-  alt="Simple Pipeline"
-  className="diagram"
-  width="50%"
-/>
+<SimpleSvg className="diagram" width="40%" />
 
 #### Module processing timeline
 
-<img
-  src={require('../../static/img/parallel/simple_timeline.png').default}
-  alt="Simple Pipeline Timeline"
-  className="diagram"
-  width="90%"
-/>
+<SimpleTimelineSvg className="diagram" width="90%" />
 
 *Sequential pipeline* processes these 3 jobs in 15 seconds (3 jobs × 5 modules × 1 second each) while the *parallel* one interlaces jobs execution and finishes approximately after **8 seconds**.
 
@@ -195,8 +187,7 @@ class ExampleModule(Module.Runtime):
     {label: "Config-first", value: "config"},
   ]}
 >
-  <TabItem value="code">
-  <>
+<TabItem value="code">
 
 ``` python title="main.py"
 from magda.pipeline.parallel import init, ParallelPipeline
@@ -239,10 +230,8 @@ result = await asyncio.gather(
 )
 ```
 
-  </>
-  </TabItem>
-  <TabItem value="config">
-  <>
+</TabItem>
+<TabItem value="config">
 
 ```yml title="config.yml"
 modules:
@@ -282,28 +271,17 @@ pipeline = ConfigReader.read('./config.yml', ModuleFactory, context=context)
 result = await pipeline.run(job)
 ```
 
-  </>
-  </TabItem>
+</TabItem>
 </Tabs>
 
 
 ### Resource claim
 
-<img
-  src={require('../../static/img/parallel/resource_claim.png').default}
-  alt="Resource Claim"
-  className="diagram"
-  width="25%"
-/>
+<ResourcesSvg className="diagram" width="20%" />
 
 #### Module processing timeline
 
-<img
-  src={require('../../static/img/parallel/resource_claim_timeline.png').default}
-  alt="Resource Claim Timeline"
-  className="diagram"
-  width="60%"
-/>
+<ResourcesTimelineSvg className="diagram" width="50%" />
 
 *Sequential pipeline* processes these 3 jobs in 9 seconds (3 jobs × 3 modules × 1 second each) while the *parallel* one interlaces jobs execution and finishes approximately after **4 seconds**.
 
@@ -314,8 +292,7 @@ result = await pipeline.run(job)
     {label: "Config-first", value: "config"},
   ]}
 >
-  <TabItem value="code">
-  <>
+<TabItem value="code">
 
 ```python title="main.py"
 from magda.pipeline.parallel import init, ParallelPipeline
@@ -357,10 +334,8 @@ result = await asyncio.gather(
 )
 ```
 
-  </>
-  </TabItem>
-  <TabItem value="config">
-  <>
+</TabItem>
+<TabItem value="config">
 
 ```yml {20,23-24} title="config.yml"
 modules:
@@ -397,6 +372,5 @@ pipeline = ConfigReader.read('./config.yml', ModuleFactory, context=context)
 result = await pipeline.run(job)
 ```
 
-  </>
-  </TabItem>
+</TabItem>
 </Tabs>

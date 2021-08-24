@@ -39,9 +39,16 @@ html[data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
-.diagram {
+img.diagram {
   display: block;
   margin: auto;
   border: transparent;
   border-radius: 1rem;
+}
+
+svg.diagram {
+  display: block;
+  margin: auto;
+  height: auto;
+  margin-bottom: var(--ifm-leading);
 }

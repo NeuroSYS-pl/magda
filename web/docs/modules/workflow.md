@@ -9,7 +9,7 @@ This section describes how to build dependencies between modules and how to acce
 
 ## Idea
 
-The main idea of building a modules dependency graph (*Directed Acyclic Graph*) is to specify the predecessors of a given module either from code or from a configuration file. Modules are obliged to have a proper input specified in the `@accept` decorator, which can take a class name or a data interface to be returned (described in detail on the page [Interfaces](interfaces)). 
+The main idea of building a modules dependency graph (*Directed Acyclic Graph*) is to specify the predecessors of a given module either from code or from a configuration file. Modules are obliged to have a proper input specified in the `@accept` decorator, which can take a class name or a data interface to be returned (described in detail on the page [Interfaces](./interfaces.md)). 
 
 This page covers three key aspects:
  

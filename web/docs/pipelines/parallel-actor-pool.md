@@ -6,6 +6,14 @@ sidebar_position: 3
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+import IdeaSvg from '../assets/actor-pool/idea.svg';
+import IdeaTimelineSvg from '../assets/actor-pool/idea-timeline.svg';
+import TimelineSequentialSvg from '../assets/actor-pool/timeline-sequential.svg';
+import TimelineParallelSvg from '../assets/actor-pool/timeline-parallel.svg';
+import TimelineActorPoolSvg from '../assets/actor-pool/timeline-actor-pool.svg';
+import Timeline4JobsSvg from '../assets/actor-pool/timeline-4-jobs.svg';
+
+
 # Parallel Actor Pool
 
 In some cases, the *parallel pipeline* is not enough for efficient processing. E.g. when one of the groups is significantly more demanding than others. The *parallel actor pool* was created to solve these kind of problems.
@@ -17,22 +25,12 @@ The basic idea of a *parallel actor pool* is **replicating** groups (actors). Th
 It doesn't violate the *parallel pipeline* constraints - each graph is processed sequentialy within a single request (job).
 However, as it was mentioned earlier, the *parallel actor pool* replicates groups and graphs within them, which in turn increases the capacity of a pipeline at that certain fragment.
 
-<img
-  src={require('../../static/img/parallel_pool/idea_diagram.png').default}
-  alt="Idea diagram"
-  className="diagram"
-  width="50%"
-/>
+<IdeaSvg className="diagram" width="40%" />
 
 
 #### Module processing timeline
 
-<img
-  src={require('../../static/img/parallel_pool/timeline_actorpool.png').default}
-  alt="Timeline Actor Pool"
-  className="diagram"
-  width="75%"
-/>
+<IdeaTimelineSvg className="diagram" width="90%" />
 
 The idea is similar to the [ray.ActorPool](https://docs.ray.io/en/master/actors.html#actor-pool).
 
@@ -48,17 +46,14 @@ The idea is similar to the [ray.ActorPool](https://docs.ray.io/en/master/actors.
     {label: "Config-first", value: "config"},
   ]}
 >
-  <TabItem value="code">
-  <>
+<TabItem value="code">
 
 ``` python
 group = ParallelPipeline.Group('g1', replicas=3, **rest_options)
 ```
 
-  </>
-  </TabItem>
-  <TabItem value="config">
-  <>
+</TabItem>
+<TabItem value="config">
 
 ```yaml {4}
 groups:
@@ -68,8 +63,7 @@ groups:
       ...
 ```
 
-  </>
-  </TabItem>
+</TabItem>
 </Tabs>
 
 On the logical layer, the pipeline will be the same regardless of the number of `replicas`. Each request will be processed **once** by the `g1` group.
@@ -110,12 +104,7 @@ class LongRunningModule(Module.Runtime):
 
 Using these modules, a simple pipeline is created:
 
-<img
-  src={require('../../static/img/parallel_pool/idea_diagram.png').default}
-  alt="Idea diagram"
-  className="diagram"
-  width="50%"
-/>
+<IdeaSvg className="diagram" width="40%" />
 
 <Tabs
   defaultValue="code"
@@ -124,8 +113,7 @@ Using these modules, a simple pipeline is created:
     {label: "Config-first", value: "config"},
   ]}
 >
-  <TabItem value="code">
-  <>
+<TabItem value="code">
 
 ``` python title="main.py"
 from magda.pipeline.parallel import init, ParallelPipeline
@@ -152,10 +140,8 @@ pipeline = (
 )
 ```
 
-  </>
-  </TabItem>
-  <TabItem value="config">
-  <>
+</TabItem>
+<TabItem value="config">
 
 ```yaml title="config.yml"
 modules:
@@ -188,8 +174,7 @@ from magda.module import ModuleFactory
 pipeline = ConfigReader.read('./config.yml', ModuleFactory, context=context)
 ```
 
-  </>
-  </TabItem>
+</TabItem>
 </Tabs>
 
 
@@ -204,28 +189,13 @@ pipeline = ConfigReader.read('./config.yml', ModuleFactory, context=context)
   ]}
 >
   <TabItem value="actorpool">
-    <img
-      src={require('../../static/img/parallel_pool/timeline_actorpool.png').default}
-      alt="Timeline Actor Pool"
-      className="diagram"
-      width="100%"
-    />
+    <TimelineActorPoolSvg className="diagram" width="100%" />
   </TabItem>
   <TabItem value="parallel">
-    <img
-      src={require('../../static/img/parallel_pool/timeline_parallel.png').default}
-      alt="Timeline Parallel"
-      className="diagram"
-      width="100%"
-    />
+    <TimelineParallelSvg className="diagram" width="100%" />
   </TabItem>
   <TabItem value="sequential">
-    <img
-      src={require('../../static/img/parallel_pool/timeline_sequential.png').default}
-      alt="Timeline Sequential"
-      className="diagram"
-      width="100%"
-    />
+    <TimelineSequentialSvg className="diagram" width="100%" />
   </TabItem>
 </Tabs>
 
@@ -246,9 +216,4 @@ In the example above, requesting the 4th job (while having only 3 replicas of `g
 
 #### Module processing timeline
 
-<img
-  src={require('../../static/img/parallel_pool/timeline_4jobs.png').default}
-  alt="Timeline 4 Jobs"
-  className="diagram"
-  width="100%"
-/>
+<Timeline4JobsSvg className="diagram" width="100%" />

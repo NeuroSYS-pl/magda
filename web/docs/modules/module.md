@@ -3,9 +3,12 @@ title: General outlook
 sidebar_position: 1
 ---
 
+import Phases from '../assets/module/phases.svg';
+
+
 # General outlook
 
-`Module` is the most important element of *MAGDA*. As mentioned in [overview](../home), this library is based on graphs so think of modules as nodes. These nodes should execute a single function. They are connected to other nodes by defining input modules, nodes that the current one depends on, and output modules, nodes that the current one sends its results to.
+`Module` is the most important element of *MAGDA*. As mentioned in [overview](../home.md), this library is based on graphs so think of modules as nodes. These nodes should execute a single function. They are connected to other nodes by defining input modules, nodes that the current one depends on, and output modules, nodes that the current one sends its results to.
 
 ## Module types
 
@@ -37,6 +40,7 @@ For convenience purposes the base class `Module` has hooks to few classes inside
 It's possible to also access result objects via:
 - `Module.Result` - result object from a single `Module`
 - `Module.ResultSet` - container for all `Module.Result`s
+
 ## Parameters
 
 A Module has three ways of accessing data:
@@ -76,17 +80,14 @@ There is a `return None` at the end of a `run` method. It's necessary to always 
 :::
 
 ## Two states of a `Module`
+
 Like pipelines, `Module` can be in one of two states. It can either be in a *builder* state, or in an *execution* state. The first one allows do define how a `Module` should behave, add parameters, define decorators. The latter one is accessed by calling the `build` method which results in an executable module. The result of building a `Module` is one of two objects `Module.Runtime` or `Module.Aggregate`, depending from which one the class inherited.
 
 ## Module bootstrapping
+
 Modules has a special function `bootstrap` that acts just as a regular booting function. It cannot be invoked manually but is run at the very start **after a module is built** and is run **only once** per module. It's especially useful when initializing data or loading something from disk which is essential for the `Module` to work properly, such as stored Neural Network weights.
 
-<img
-  src={require('../../static/img/module/module_bootstrapping.png').default}
-  alt="Bootstrapping"
-  className="diagram"
-  width="75%"
-/>
+<Phases className="diagram" width="75%" />
 
 ``` python
 @expose()
@@ -121,7 +122,9 @@ print(runtime.run()) # {'module values': 10, 'module weights': [2, 5, 8]}
 ```
 
 The first one, `ModuleBootstrapedValues`, has an additional `self.initial_value` set during bootstrapping, which is later used to calculate an output. The second `Module`, `ModuleBootstrapedWeights`, makes use of a parameter passed to it during building phase. Here it's just used to initialize fake `self.weights` but could normally be used to read or initialize proper NN weights.
+
 ## Module teardown
+
 Next to `bootstrap` function, a module may also have implemented `teardown` function. It is run for each module when `Pipeline.close` method is called and is intended to handle some logic in the end of module's lifecycle. An exemplary usecase is closing a connection to database. 
 
 ``` python
@@ -134,6 +137,7 @@ class ModuleTeardown(Module.Runtime):
     def teardown(self):
         # i.e. close here a DB connection
 ```
+
 ## Decorators
 
 Multiple decorators were designed to allow for quick definition of most important `Module` behaviors.
@@ -147,6 +151,7 @@ Multiple decorators were designed to allow for quick definition of most importan
 Generally speaking, the order of decorators doesn't matter, but there is an exception, `@finalize` decorator is a special case.
 
 ### `@finalize`
+
 This is the most important decorator. It's job is to take a class, which inherits from `Module.Runtime` or `Module.Aggregate` and convert it to a *builder* state, which can be further customized.
 
 The code must comply with the following rules:
@@ -169,8 +174,10 @@ and `@accept` signature:
 @accept(*ancestors: Iterable[Module], self=False)
 ```
 
-A `Module` can have multiple different ancestors. Also, the same type of `Module` can be chained multiple times and for this the optional parameter `self=True` ought to be used. For more on `@accept` and `@produce` parameters please refer to [Module workflow](workflow) and to [Interfaces](interfaces).
+A `Module` can have multiple different ancestors. Also, the same type of `Module` can be chained multiple times and for this the optional parameter `self=True` ought to be used. For more on `@accept` and `@produce` parameters please refer to [Module workflow](./workflow.md) and to [Interfaces](./interfaces.md).
+
 ### `@expose`
+
 If it's necessary to keep a given `Module`'s output to be accessed at the end of a pipeline `@expose` decorator should be used. Exposing a `Module` is a way of keeping it's output in a `ResultSet` under a given name. This can be especially useful for logging purposes or exporting data after each run from a certain point of interest in a graph.
 
 The names must be unique throught the pipeline, and if the `name` parameter is not set the name given during the `Module` initialization will is used instead.
@@ -197,10 +204,11 @@ builder.add_module(ExposedModule('module_unnamed').depends_on(builder.get_module
 runtime = builder.build()
 print(runtime.run())  # {'important_module': 'ExposedModuleNamed output', 'module_unnamed': 'ExposedModule output'}
 ```
+
 Both `Module`'s outputs will be available after the completed graph traversal, but `ExposedModuleNamed` output will be accessible under the name `important_module`, while `ExposedModule` output will be available under `module_unnamed`.
 
-
 ### `@register`
+
 The `@register` decorator's job is to create a mapping between a given name (a string) and a class which can be then used by `ModuleFactory`.
 Decorator `@register` is directly connected to `ModuleFactory`, which is used when building a pipeline via config files.
 
@@ -230,6 +238,7 @@ print(ModuleFactory.get('decorator-register'))  # KeyError: 'decorator-register'
 As shown, when unregistering a `Module` other references are still present but when accessing `decorator-register` class it's no longer available and throws an error. Althought not mandatory, the use of kebab-case for `Module` registering is recommended. 
 
 ## Modules in config
+
 Even though, in yaml files it's not feasible to create a `Module`, it's possible to specify a wanted module, via the `type` parameter.
 In order to use a class as a `type` it needs to be registered with a `ModuleFactory`. 
 
@@ -238,7 +247,7 @@ In order to use a class as a `type` it needs to be registered with a `ModuleFact
 This `type` will be then looked for in `ModuleFactory` and a class corresponding to the name will be dynamically built.
 It's vital to pass a `ModuleFactory` class to a `ConfigReader.read` method for it to work properly.
 
-For more information on how to work with config files please refer to the [configuration file documentation page](../configuration/config-file).
+For more information on how to work with config files please refer to the [configuration file documentation page](../configuration/config-file.md).
 
 :::tip Pro Tip
 If using a decorator approach it's enough to import all classes annotated with `@register`. The method will be run while importing. If using the manual approach it's necessary to register each `Module` individually with `ModuleFactory`, as shown above.
