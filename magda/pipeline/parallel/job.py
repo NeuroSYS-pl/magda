@@ -91,7 +91,7 @@ class Job:
                     # Check for early error stopping
                     if future.result.contains_invalid_result():
                         return Module.ResultSet(list(self._results.values()))
-                    
+
                 self._status[future.group] = Job.GroupStatus.DONE
                 del self._tasks[future.group]
 
