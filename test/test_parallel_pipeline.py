@@ -334,6 +334,51 @@ class TestParallelPipeline:
         with pytest.raises(ClosedPipelineException):
             await pipeline.process()
 
+    @pytest.mark.asyncio
+    async def test_failed_pipeline_run_not_affecting_other_runs(self, ray_context):
+        builder = ParallelPipeline()
+
+        @finalize
+        class ModuleA(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                sleep(0.01)
+                return 'a'
+
+        @accept(ModuleA)
+        @finalize
+        class ModuleError(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                if request == 'error':
+                    raise Exception('Whoops')
+
+        @accept(ModuleError)
+        @expose()
+        @finalize
+        class ModuleC(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                sleep(0.01)
+                return 'c'
+
+        builder.add_module(ModuleA('m1', group='g1'))
+        builder.add_module(ModuleError('m2', group='g1').depends_on(builder.get_module('m1')))
+        builder.add_module(ModuleError('m3', group='g2'))
+        builder.add_module(
+            ModuleC('m4', group='g3')
+            .depends_on(builder.get_module('m2'))
+            .depends_on(builder.get_module('m3'))
+        )
+
+        pipeline = await builder.build()
+        result1, error1 = await pipeline.run('error')
+        result2, error2 = await pipeline.run('R2')
+
+        assert result1 is None
+        assert isinstance(error1, Exception)
+        assert str(error1) == 'Whoops'
+        assert 'm4' in result2
+        assert result2['m4'] == 'c'
+        assert error2 is None
+
 
 class TestStatefulParallelPipeline:
 
