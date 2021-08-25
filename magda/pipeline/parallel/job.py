@@ -18,6 +18,7 @@ class Job:
         IDLE = auto()
         PROCESSING = auto()
         DONE = auto()
+        CANCELLED = auto()
 
     def __init__(self, request: Any, groups: List[Group], is_regular_runtime: bool):
         self.uuid = uuid4()
@@ -49,7 +50,7 @@ class Job:
     @property
     def _finished(self) -> bool:
         return all([
-            self._status[group.name] == Job.GroupStatus.DONE
+            self._status[group.name] in (Job.GroupStatus.DONE, Job.GroupStatus.CANCELLED)
             for group in self._groups
         ])
 
@@ -94,10 +95,12 @@ class Job:
 
                 # Check for early error stopping
                 if future.result.contains_invalid_result():
-                    self._tasks.clear()
-                    self._status = dict((k, Job.GroupStatus.DONE) for k in self._status.keys())
-
-                    return Module.ResultSet(list(self._results.values()))
+                    self._status = dict(
+                        (k, Job.GroupStatus.CANCELLED)
+                        if v in (Job.GroupStatus.IDLE, Job.GroupStatus.PROCESSING)
+                        else (k, v)
+                        for k, v in self._status.items()
+                    )
 
             for group in self._ready_groups:
                 await self._run_group(group)
