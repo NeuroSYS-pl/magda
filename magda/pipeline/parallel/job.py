@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from magda import module
 from uuid import uuid4
 from enum import Enum, auto
 from typing import List, Dict, Any
@@ -83,11 +84,14 @@ class Job:
                 fs=self._tasks.values(),
                 return_when=asyncio.FIRST_COMPLETED,
             )
-
             for task in done:
                 future: FutureResult = task.result()
                 for module_result in future.result.collection:
                     self._results[module_result.name] = module_result
+                    # Check for early error stopping
+                    if future.result.contains_invalid_result():
+                        return Module.ResultSet(list(self._results.values()))
+                    
                 self._status[future.group] = Job.GroupStatus.DONE
                 del self._tasks[future.group]
 

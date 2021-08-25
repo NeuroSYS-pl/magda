@@ -118,7 +118,7 @@ class Graph:
                         )
                     )
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(str(e))
                     results.append(
                         Module.Result(
                             result=None,
