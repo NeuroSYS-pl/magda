@@ -88,12 +88,16 @@ class Job:
                 future: FutureResult = task.result()
                 for module_result in future.result.collection:
                     self._results[module_result.name] = module_result
-                    # Check for early error stopping
-                    if future.result.contains_invalid_result():
-                        return Module.ResultSet(list(self._results.values()))
 
                 self._status[future.group] = Job.GroupStatus.DONE
                 del self._tasks[future.group]
+
+                # Check for early error stopping
+                if future.result.contains_invalid_result():
+                    self._tasks.clear()
+                    self._status = dict((k, Job.GroupStatus.DONE) for k in self._status.keys())
+
+                    return Module.ResultSet(list(self._results.values()))
 
             for group in self._ready_groups:
                 await self._run_group(group)
