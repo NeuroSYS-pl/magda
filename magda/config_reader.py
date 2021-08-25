@@ -5,7 +5,7 @@ import yaml
 import warnings
 from dataclasses import dataclass, field
 from numbers import Number
-from typing import Optional, List, Dict, Any, Type, Union
+from typing import Optional, List, Dict, Any, Type, Union, Callable
 
 from magda.module.factory import ModuleFactory
 from magda.pipeline.base import BasePipeline
@@ -37,6 +37,7 @@ class ConfigReader:
         shared_parameters: Optional[Dict] = None,
         *,
         logger: Optional[MagdaLogger.Config] = None,
+        after_created: Optional[Union[Dict[str, List[Callable]], List[Callable]]] = None
     ) -> BasePipeline.Runtime:
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
@@ -59,14 +60,24 @@ class ConfigReader:
         if name:
             cls._check_pipeline_name(name)
 
+        is_parallel_pipeline = any([m.group is not None for m in modules])
+
         pipeline = (
             ParallelPipeline(name=name)
-            if any([m.group is not None for m in modules])
+            if is_parallel_pipeline
             else SequentialPipeline(name=name)
         )
 
         pipeline = cls._add_modules_to_pipeline(modules, pipeline, module_factory)
-        pipeline = cls._add_group_options(group_options, pipeline)
+
+        if after_created:
+            if not is_parallel_pipeline:
+                warnings.warn('Hooks passed in parameter `after_created`'
+                              ' will not be used in SequentialPipeline')
+            else:
+                cls._check_hooks(after_created, group_options.keys())
+
+        pipeline = cls._add_group_options(group_options, pipeline, after_created)
 
         # connect modules
         for mod in modules:
@@ -160,9 +171,22 @@ class ConfigReader:
     def _check_pipeline_name(name: str):
         if not isinstance(name, (str, Number)):
             raise WrongParameterValueException(
-                "Parameter 'name' in config should accept strings or numbers only."
+                "Parameter 'name' should accept strings or numbers only."
                 f"Found value: '{name}'."
             )
+
+    @staticmethod
+    def _check_hooks(
+        hooks: Union[Dict[str, List[Callable]], List[Callable]],
+        group_names: List[str]
+    ):
+        if not isinstance(hooks, (Dict[str, List[Callable]], List[Callable])):
+            raise WrongParameterValueException(
+                "Parameter 'after_created' should accept "
+                "list of callables or dictionary Dict[str, List[Callable]"
+                f"Found value: '{hooks}'."
+            )
+        # TODO - finish
 
     @staticmethod
     def _extract_information_from_yaml(parsed_yaml, shared_parameters):
@@ -206,10 +230,14 @@ class ConfigReader:
         return pipeline
 
     @classmethod
-    def _add_group_options(cls, group_options, pipeline):
+    def _add_group_options(cls, group_options, pipeline, hooks):
         if group_options and isinstance(pipeline, ParallelPipeline):
             for name, params in group_options.items():
-                group = ParallelPipeline.Group(name)
+                if hooks:
+                    group_hooks = hooks[name] if isinstance(hooks, dict) else hooks
+                else:
+                    group_hooks = None
+                group = ParallelPipeline.Group(name, after_created=group_hooks)
                 group.set_replicas(params['replicas'] if 'replicas' in params else 1)
                 params.pop('replicas', None)
                 if params.keys():

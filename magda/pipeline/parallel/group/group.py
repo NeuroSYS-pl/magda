@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional, Callable
 
 from magda.module.module import Module
 from magda.pipeline.parallel.group.runtime import GroupRuntime
@@ -10,13 +10,16 @@ class Group:
     Runtime = GroupRuntime
 
     def __init__(
-        self, name: str,
+        self,
+        name: str,
         *,
         replicas: int = 1,
         state_type=None,
+        after_created: Optional[List[Callable]] = None,
         **options,
     ):
         self.name = name
+        self.hooks = after_created
         self.replicas = replicas
         self.options = options
         self._state_type = state_type
@@ -45,6 +48,7 @@ class Group:
     ) -> Group.Runtime:
         return self.Runtime(
             name=self.name,
+            hooks=self.hooks,
             modules=modules,
             dependent_modules=dependent_modules,
             dependent_modules_nonregular=dependent_modules_nonregular,
