@@ -5,7 +5,7 @@ import yaml
 import warnings
 from dataclasses import dataclass, field
 from numbers import Number
-from typing import Optional, List, Dict, Any, Type, Union, Callable
+from typing import Optional, List, Dict, Any, Type, Union, Callable, Set
 
 from magda.module.factory import ModuleFactory
 from magda.pipeline.base import BasePipeline
@@ -37,7 +37,7 @@ class ConfigReader:
         shared_parameters: Optional[Dict] = None,
         *,
         logger: Optional[MagdaLogger.Config] = None,
-        after_created: Optional[Union[Dict[str, List[Callable]], List[Callable]]] = None
+        hooks: Optional[Union[Dict[str, List[Callable]], List[Callable]]] = None
     ) -> BasePipeline.Runtime:
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
@@ -70,14 +70,14 @@ class ConfigReader:
 
         pipeline = cls._add_modules_to_pipeline(modules, pipeline, module_factory)
 
-        if after_created:
+        if hooks:
             if not is_parallel_pipeline:
-                warnings.warn('Hooks passed in parameter `after_created`'
-                              ' will not be used in SequentialPipeline')
+                warnings.warn('Hooks passed in parameter `after_created` '
+                              'will not be used in SequentialPipeline')
             else:
-                cls._check_hooks(after_created, group_options.keys())
+                cls._check_hooks(hooks, {m.group for m in modules})
 
-        pipeline = cls._add_group_options(group_options, pipeline, after_created)
+        pipeline = cls._add_group_options(group_options, pipeline, hooks)
 
         # connect modules
         for mod in modules:
@@ -91,7 +91,7 @@ class ConfigReader:
                         f"Module '{dependent_mod_name}' hasn't been defined in the config file, "
                         "whereas it's used as a dependency."
                     )
-
+        
         runtime = await pipeline.build(
             context=context,
             shared_parameters=shared_parameters,
@@ -178,15 +178,48 @@ class ConfigReader:
     @staticmethod
     def _check_hooks(
         hooks: Union[Dict[str, List[Callable]], List[Callable]],
-        group_names: List[str]
+        group_names: Set[str]
     ):
-        if not isinstance(hooks, (Dict[str, List[Callable]], List[Callable])):
+        if isinstance(hooks, list):
+            if len(hooks) > 0:
+                if not all(callable(hook) for hook in hooks):
+                    raise WrongParameterValueException(
+                        "Parameter 'after_created' contains list with non-callable elements."
+                    )
+            else:
+                warnings.warn("Parameter 'after_created' contains an empty list.")
+        elif isinstance(hooks, dict):
+            if len(hooks) > 0:
+                if not all(group in group_names for group in hooks.keys()):
+                    raise WrongParameterValueException(
+                        "Parameter 'after_created' contains a dictionary "
+                        "with non-existing groups as keys."
+                    )
+                if not all(isinstance(hook, list) for hook in hooks.values()):
+                    raise WrongParameterValueException(
+                        "Parameter 'after_created' contains a dictionary "
+                        "with values that are not lists."
+                    )
+
+                flattened_dict_values = [
+                    hook
+                    for group_hooks in hooks.values()
+                    for hook in group_hooks
+                ]
+
+                if not all(callable(hook) for hook in flattened_dict_values):
+                    raise WrongParameterValueException(
+                        "Parameter 'after_created' contains a dictionary "
+                        "with non-callable values."
+                    )
+            else:
+                warnings.warn("Parameter 'after_created' contains an empty dict.")
+        else:
             raise WrongParameterValueException(
                 "Parameter 'after_created' should accept "
-                "list of callables or dictionary Dict[str, List[Callable]"
+                "list of callables or dictionary Dict[str, List[Callable] indexed by groups. "
                 f"Found value: '{hooks}'."
             )
-        # TODO - finish
 
     @staticmethod
     def _extract_information_from_yaml(parsed_yaml, shared_parameters):
@@ -206,6 +239,10 @@ class ConfigReader:
                 group['name']: group['options']
                 for group in parsed_yaml['groups']
             }
+
+        for module in modules:
+            if module.group not in group_options and module.group is not None:
+                group_options[module.group] = {}
 
         return pipeline_name, modules, shared_parameters, group_options
 

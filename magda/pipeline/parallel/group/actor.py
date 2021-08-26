@@ -37,7 +37,7 @@ class Actor:
         )
         if hooks:
             for hook in hooks:
-                await hook()
+                hook()
         await self.graph.bootstrap(self._logger)
 
     async def run(self, job_id: UUID, request, results=[], is_regular_runtime=True):
