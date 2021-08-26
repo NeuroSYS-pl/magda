@@ -369,8 +369,12 @@ class TestParallelPipeline:
         )
 
         pipeline = await builder.build()
-        result1, error1 = await pipeline.run('error')
-        result2, error2 = await pipeline.run('R2')
+        results = await asyncio.gather(*[
+            asyncio.create_task(pipeline.run(request_value))
+            for request_value in ['error', 'R2']
+        ])
+        result1, error1 = results[0]
+        result2, error2 = results[1]
 
         assert result1 is None
         assert isinstance(error1, Exception)
