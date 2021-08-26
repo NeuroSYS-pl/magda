@@ -32,6 +32,7 @@ class ExampleSimpleSequentialConfigReader:
             self.pipeline = await ConfigReader.read(
                 config,
                 ModuleFactory,
+                name='CustomName',
                 config_parameters=config_params,
                 context=lambda: Context(prefix),
                 logger=MagdaLogger.Config(),
@@ -40,7 +41,7 @@ class ExampleSimpleSequentialConfigReader:
     async def run(self):
         # Run one job and measure duration
         start = time()
-        result = await self.pipeline.run(Request('R'))
+        result, _ = await self.pipeline.run(Request('R'))
         end = time()
 
         # Close pipeline (and teardown modules)

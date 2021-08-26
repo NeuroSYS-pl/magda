@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from abc import ABC, ABCMeta, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Tuple, Any, Optional
 
 from magda.module.module import Module
 from magda.pipeline.graph_validator import GraphValidator
@@ -30,12 +30,20 @@ class BasePipeline(metaclass=BasePipelineMeta):
             self._context = context
             self._shared_parameters = shared_parameters
 
-        def parse_results(self, results: List[Module.Result]) -> Dict[str, Any]:
-            return {
-                r.expose: r.result
-                for r in results
-                if r.expose is not None
-            }
+        def parse_results(self, results: Module.ResultSet) -> Tuple[
+            Optional[Dict[str, Any]],
+            Optional[Exception]
+        ]:
+            if results.contains_invalid_result():
+                raised_exception = results.get_error_if_exists()
+                result_tuple = (None, raised_exception.error)
+            else:
+                result_tuple = ({
+                    r.expose: r.result
+                    for r in results.collection
+                    if r.expose is not None
+                }, None)
+            return result_tuple
 
         @property
         def name(self) -> str:

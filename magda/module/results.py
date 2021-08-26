@@ -14,10 +14,14 @@ ResultSetInput = Union[str, BaseModule, BaseModuleRuntime, ModuleInterface]
 class Result:
     """ Module output class """
     result: Any
+    error: Any
     interface: ModuleInterface
     name: str
     src_class: BaseModule
     expose: Optional[str] = None
+
+    def is_successful(self):
+        return self.error is None
 
 
 class ResultSet:
@@ -83,3 +87,13 @@ class ResultSet:
                 'Expecting selector with only one solution.'
             )
         return results[0]
+
+    def contains_invalid_result(self) -> bool:
+        """ Returns whether there exists a Module Result that resulted in an exception """
+        return any([res for res in self._collection if not res.is_successful()])
+
+    def get_error_if_exists(self) -> Result:
+        """ Returns a Result if any Module resulted in an exception,
+        or returns None if there is no error Results.
+        """
+        return next((result for result in self.collection if not result.is_successful()), None)

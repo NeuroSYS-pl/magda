@@ -61,7 +61,7 @@ class ExampleParallel:
         # Print results
         print(f'Duration = {end - start:.2f} s')
         print('Results:')
-        for index, result in enumerate(results):
+        for index, (result, _) in enumerate(results):
             print(f' {index}:')
             for key, value in result.items():
                 print(f'  {key}\t → {value}')

@@ -11,4 +11,4 @@ from magda.module.module import Module
 class FutureResult:
     job: UUID
     group: str
-    result: List[Module.Result]
+    result: Module.ResultSet

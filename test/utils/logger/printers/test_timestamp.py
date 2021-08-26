@@ -1,4 +1,5 @@
 import re
+from unittest.mock import patch
 from magda.utils.logger.printers import TimestampPrinter
 
 
@@ -20,9 +21,10 @@ class TestTimestampPrinter:
         assert re.search(self.TIMESTAMP_REGEXP, output) is not None
         assert re.search(self.COLOR_REGEXP, output) is not None
 
-    def test_should_ignore_extra_arguments(self):
+    @patch('magda.utils.logger.printers.timestamp.datetime')
+    def test_should_ignore_extra_arguments(self, datetime_mock):
+        datetime_mock.now.return_value.strftime.return_value = '2021-08-20'
         printer = TimestampPrinter()
         output_base = printer.flush(colors=False)
         output_extra = printer.flush(colors=False, extra=[1, 2, 3])
-
         assert output_base == output_extra

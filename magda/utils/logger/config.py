@@ -7,6 +7,7 @@ from typing import Callable, List, Union
 
 def get_default_format() -> List[LoggerConfig.Part]:
     return [
+        LoggerConfig.Part.LEVEL,
         LoggerConfig.Part.TIMESTAMP,
         LoggerConfig.Part.PIPELINE,
         LoggerConfig.Part.UID,
@@ -26,10 +27,18 @@ class LoggerConfig:
         REPLICA = auto()
         REQUEST = auto()
         MESSAGE = auto()
+        LEVEL = auto()
 
     class Output(Enum):
         STDOUT = auto()
         LOGGING = auto()
+
+    class Level(Enum):
+        INFO = auto()
+        WARNING = auto()
+        ERROR = auto()
+        DEBUG = auto()
+        CRITICAL = auto()
 
     enable: bool = True
     log_events: bool = True

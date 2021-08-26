@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from magda import module
 from uuid import uuid4
 from enum import Enum, auto
 from typing import List, Dict, Any
@@ -17,6 +18,7 @@ class Job:
         IDLE = auto()
         PROCESSING = auto()
         DONE = auto()
+        CANCELLED = auto()
 
     def __init__(self, request: Any, groups: List[Group], is_regular_runtime: bool):
         self.uuid = uuid4()
@@ -48,7 +50,7 @@ class Job:
     @property
     def _finished(self) -> bool:
         return all([
-            self._status[group.name] == Job.GroupStatus.DONE
+            self._status[group.name] in (Job.GroupStatus.DONE, Job.GroupStatus.CANCELLED)
             for group in self._groups
         ])
 
@@ -83,15 +85,23 @@ class Job:
                 fs=self._tasks.values(),
                 return_when=asyncio.FIRST_COMPLETED,
             )
-
             for task in done:
                 future: FutureResult = task.result()
-                for module_result in future.result:
+                for module_result in future.result.collection:
                     self._results[module_result.name] = module_result
+
                 self._status[future.group] = Job.GroupStatus.DONE
                 del self._tasks[future.group]
 
+                # Check for early error stopping
+                if future.result.contains_invalid_result():
+                    self._status = dict(
+                        (k, Job.GroupStatus.CANCELLED)
+                        if v in (Job.GroupStatus.IDLE, Job.GroupStatus.PROCESSING)
+                        else (k, v)
+                        for k, v in self._status.items()
+                    )
+
             for group in self._ready_groups:
                 await self._run_group(group)
-
-        return self._results.values()
+        return Module.ResultSet(list(self._results.values()))

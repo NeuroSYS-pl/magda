@@ -4,10 +4,11 @@ from typing import Callable
 from magda.module import Module
 
 
-def wrap_into_result(result, name='testing-module', src_class=None, expose=None):
+def wrap_into_result(result, error=None, name='testing-module', src_class=None, expose=None):
     interface = result.__class__
     return Module.Result(
         result=result,
+        error=error,
         interface=interface,
         name=name,
         src_class=src_class,

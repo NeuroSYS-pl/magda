@@ -190,7 +190,7 @@ class TestParallelPipelineSerial:
         builder.add_module(ModuleWithContext('m1', group='g1'))
         pipeline = await builder.build(context)
         assert pipeline.context == context
-        results = await pipeline.run()
+        results, _ = await pipeline.run()
         assert results[tag] == context
 
     @pytest.mark.asyncio
@@ -209,7 +209,7 @@ class TestParallelPipelineSerial:
         builder.add_module(ModuleWithSharedParams('m1', group='g1'))
         pipeline = await builder.build(context, shared_parameters)
         assert pipeline.shared_parameters == shared_parameters
-        results = await pipeline.run()
+        results, _ = await pipeline.run()
         assert results[tag] == shared_parameters
 
     @pytest.mark.asyncio
@@ -226,7 +226,7 @@ class TestParallelPipelineSerial:
         builder = ParallelPipeline()
         builder.add_module(MockModule('m1', group='g1'))
         pipeline = await builder.build()
-        results = await pipeline.run()
+        results, _ = await pipeline.run()
 
         assert 'output_tag' in results
         assert results['output_tag'] == 'output_result'
@@ -249,7 +249,7 @@ class TestParallelPipeline:
             .expose_result('final')
         )
         pipeline = await builder.build()
-        result = await pipeline.run('R1')
+        result, _ = await pipeline.run('R1')
         assert result['final'] == 'R1:C'
 
     @pytest.mark.asyncio
@@ -272,7 +272,7 @@ class TestParallelPipeline:
             .expose_result('final')
         )
         pipeline = await builder.build()
-        result = await pipeline.run('R1')
+        result, _ = await pipeline.run('R1')
         assert result['final'] == 'R1:C'
 
     @pytest.mark.asyncio
@@ -296,7 +296,8 @@ class TestParallelPipeline:
             asyncio.create_task(pipeline.run('R2')),
             asyncio.create_task(pipeline.run('R3')),
         )
-        outputs = set([r['final'] for r in results])
+
+        outputs = set([r[0]['final'] for r in results])
         assert outputs == set(['R1:C', 'R2:C', 'R3:C'])
 
     @pytest.mark.asyncio
@@ -332,6 +333,55 @@ class TestParallelPipeline:
             await pipeline.run()
         with pytest.raises(ClosedPipelineException):
             await pipeline.process()
+
+    @pytest.mark.asyncio
+    async def test_failed_pipeline_run_not_affecting_other_runs(self, ray_context):
+        builder = ParallelPipeline()
+
+        @finalize
+        class ModuleA(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                sleep(0.01)
+                return 'a'
+
+        @accept(ModuleA)
+        @finalize
+        class ModuleError(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                if request == 'error':
+                    raise Exception('Whoops')
+
+        @accept(ModuleError)
+        @expose()
+        @finalize
+        class ModuleC(Module.Runtime):
+            def run(self, request, *args, **kwargs):
+                sleep(0.01)
+                return 'c'
+
+        builder.add_module(ModuleA('m1', group='g1'))
+        builder.add_module(ModuleError('m2', group='g1').depends_on(builder.get_module('m1')))
+        builder.add_module(ModuleError('m3', group='g2'))
+        builder.add_module(
+            ModuleC('m4', group='g3')
+            .depends_on(builder.get_module('m2'))
+            .depends_on(builder.get_module('m3'))
+        )
+
+        pipeline = await builder.build()
+        results = await asyncio.gather(*[
+            asyncio.create_task(pipeline.run(request_value))
+            for request_value in ['error', 'R2']
+        ])
+        result1, error1 = results[0]
+        result2, error2 = results[1]
+
+        assert result1 is None
+        assert isinstance(error1, Exception)
+        assert str(error1) == 'Whoops'
+        assert 'm4' in result2
+        assert result2['m4'] == 'c'
+        assert error2 is None
 
 
 class TestStatefulParallelPipeline:
@@ -387,11 +437,11 @@ class TestStatefulParallelPipeline:
         )
 
         pipeline = await builder.build()
-        r1 = await pipeline.run('R1')
-        r2 = await pipeline.run('R2')
-        agg1 = await pipeline.process('A1')
-        r3 = await pipeline.run('R3')
-        agg2 = await pipeline.process('A1')
+        r1, _ = await pipeline.run('R1')
+        r2, _ = await pipeline.run('R2')
+        agg1, _ = await pipeline.process('A1')
+        r3, _ = await pipeline.run('R3')
+        agg2, _ = await pipeline.process('A1')
 
         assert len(r1) == len(r2) == len(r3) == 3
         assert len(agg1['final']) == 2
@@ -415,8 +465,8 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m7', group='g3').depends_on(builder.get_module('m6')))
 
         pipeline = await builder.build()
-        res = await pipeline.run('R1')
-        agg = await pipeline.process('A1')
+        res, _ = await pipeline.run('R1')
+        agg, _ = await pipeline.process('A1')
 
         assert len(res) == 5
         assert len(agg['agg']) == 1
@@ -441,8 +491,8 @@ class TestStatefulParallelPipeline:
 
         pipeline = await builder.build()
         await pipeline.run('R1')
-        res = await pipeline.run('R2')
-        agg = await pipeline.process('A1')
+        res, _ = await pipeline.run('R2')
+        agg, _ = await pipeline.process('A1')
 
         assert len(res) == 5
         assert len(agg) == 2
@@ -470,7 +520,7 @@ class TestStatefulParallelPipeline:
         pipeline = await builder.build()
         await pipeline.run('R1')
         await pipeline.run('R2')
-        agg = await pipeline.process('A1')
+        agg, _ = await pipeline.process('A1')
 
         assert len(agg) == 3
         assert type(agg['agg']) == list
@@ -502,8 +552,8 @@ class TestStatefulParallelPipeline:
         pipeline = await builder.build()
         await pipeline.run('R1')
         await pipeline.run('R2')
-        res = await pipeline.run('R3')
-        agg = await pipeline.process('A1')
+        res, _ = await pipeline.run('R3')
+        agg, _ = await pipeline.process('A1')
 
         assert len(res) == 6
         assert len(agg) == 3
@@ -544,10 +594,10 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleB('m13', group='g6').depends_on(builder.get_module('m12')))
 
         pipeline = await builder.build()
-        res1 = await pipeline.run('R1')
-        agg1 = await pipeline.process('A1')
-        res2 = await pipeline.run('R2')
-        agg2 = await pipeline.process('A2')
+        res1, _ = await pipeline.run('R1')
+        agg1, _ = await pipeline.process('A1')
+        res2, _ = await pipeline.run('R2')
+        agg2, _ = await pipeline.process('A2')
 
         assert len(res1) == len(res2) == 8
         assert len(agg1) == len(agg2) == 5
@@ -583,8 +633,8 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m3', group='g2').depends_on(builder.get_module('m1')))
 
         pipeline = await builder.build()
-        res = await pipeline.run('R1')
-        agg = await pipeline.process('A1')
+        res, _ = await pipeline.run('R1')
+        agg, _ = await pipeline.process('A1')
 
         assert len(res) == 0
         assert len(agg) == 3
@@ -599,8 +649,8 @@ class TestStatefulParallelPipeline:
         builder.add_module(self.ModuleC('m3', group='g2').depends_on(builder.get_module('m2')))
 
         pipeline = await builder.build()
-        res = await pipeline.run('R1')
-        agg = await pipeline.process('A1')
+        res, _ = await pipeline.run('R1')
+        agg, _ = await pipeline.process('A1')
 
         assert len(res) == 0
         assert len(agg) == 3
