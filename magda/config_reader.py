@@ -91,7 +91,7 @@ class ConfigReader:
                         f"Module '{dependent_mod_name}' hasn't been defined in the config file, "
                         "whereas it's used as a dependency."
                     )
-        
+
         runtime = await pipeline.build(
             context=context,
             shared_parameters=shared_parameters,
