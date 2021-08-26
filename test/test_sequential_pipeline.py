@@ -59,7 +59,7 @@ class TestSequentialPipeline:
     async def test_pipeline_run_no_modules(self):
         assert len(self.pipeline.modules) == 0
         runtime = await self.pipeline.build(MockContext())
-        result = await runtime.run()
+        result, _ = await runtime.run()
         assert isinstance(result, dict)
         assert len(result) == 0
 
@@ -68,7 +68,7 @@ class TestSequentialPipeline:
         module = MockModule('MockName').expose_result()
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build(MockContext())
-        results = await runtime.run()
+        results, _ = await runtime.run()
 
         assert isinstance(results, dict)
         assert len(results) == 1
@@ -272,7 +272,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_regular)
 
         runtime = await self.pipeline.build()
-        results = await runtime.run()
+        results, _ = await runtime.run()
 
         assert len(results) == 2
         assert 'regular' in results
@@ -315,7 +315,7 @@ class TestSequentialPipeline:
         self.pipeline.add_module(module_after_regular)
 
         runtime = await self.pipeline.build()
-        results = await runtime.process()
+        results, _ = await runtime.process()
 
         assert len(results) == 2
         assert 'regular' not in results
@@ -448,7 +448,7 @@ class TestSequentialPipeline:
         assert aggregate_runtime_module.state_size == 2
         assert aggregate_runtime_module.state == ['state', 'state']
 
-        results = await runtime.process()
+        results, _ = await runtime.process()
 
         assert 'after_agg' in results
         assert len(results['after_agg']) == 4
@@ -490,7 +490,7 @@ class TestSequentialPipeline:
 
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build()
-        results = await runtime.run()
+        results, _ = await runtime.run()
 
         assert 'module_with_params' in results
         assert results['module_with_params'] == parameters
@@ -525,7 +525,7 @@ class TestSequentialPipeline:
 
         shared_parameters = {'shared_param1': 1}
         runtime = await self.pipeline.build(shared_parameters=shared_parameters)
-        results = await runtime.run()
+        results, _ = await runtime.run()
 
         assert len(results) == 2
         assert 'module_with_params' in results
@@ -537,7 +537,7 @@ class TestSequentialPipeline:
         module = MockModule('mock_name').expose_result()
         self.pipeline.add_module(module)
         runtime = await self.pipeline.build()
-        results = await runtime.run()
+        results, _ = await runtime.run()
 
         assert 'mock_name' in results
         assert results['mock_name'] == 'output'
@@ -588,3 +588,38 @@ class TestSequentialPipeline:
             await runtime.run()
         with pytest.raises(ClosedPipelineException):
             await runtime.process()
+
+    @pytest.mark.asyncio
+    async def test_should_catch_module_exception(self):
+        @accept(self=True)
+        @finalize
+        class TestModuleError(Module.Runtime):
+            def run(self, **kwargs):
+                raise Exception()
+
+        @accept(TestModuleError, self=True)
+        @finalize
+        class TestModuleOk(Module.Runtime):
+            def run(self, **kwargs):
+                return 'ok'
+
+        module_1_ok = TestModuleOk('module_1_ok').expose_result()
+        module_2_error = TestModuleError('module_2_error').expose_result()
+        module_3_ok = TestModuleOk('module_3_ok').expose_result()
+        module_4_ok = TestModuleOk('module_4_ok').expose_result()
+
+        module_3_ok.depends_on(module_1_ok)
+        module_3_ok.depends_on(module_2_error)
+        module_4_ok.depends_on(module_3_ok)
+
+        self.pipeline.add_module(module_1_ok)
+        self.pipeline.add_module(module_2_error)
+        self.pipeline.add_module(module_3_ok)
+        self.pipeline.add_module(module_4_ok)
+
+        runtime = await self.pipeline.build()
+
+        result, error = await runtime.run()
+
+        assert result is None
+        assert isinstance(error, Exception)

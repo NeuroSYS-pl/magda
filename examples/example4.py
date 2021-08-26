@@ -41,7 +41,7 @@ class ExampleSimpleSequentialConfigReader:
     async def run(self):
         # Run one job and measure duration
         start = time()
-        result = await self.pipeline.run(Request('R'))
+        result, _ = await self.pipeline.run(Request('R'))
         end = time()
 
         # Close pipeline (and teardown modules)
