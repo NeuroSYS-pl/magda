@@ -40,7 +40,7 @@ class ExampleParallelConfigReader:
                 config_parameters=config_params,
                 context=lambda: Context(prefix),
                 logger=MagdaLogger.Config(output=MagdaLogger.Config.Output.LOGGING),
-                hooks=[actor_logging_hook]
+                after_created=[actor_logging_hook]
             )
 
     async def run(self, value: str = 'R', n_jobs: int = 3):
