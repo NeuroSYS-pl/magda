@@ -7,14 +7,16 @@ from test.test_module_testing_wrapper import RawData, ModuleSync
 class TestWrapIntoResult:
     def test_should_wrap_data_into_result(self):
         data: RawData = RawData('xyz')
+        error = None
         interface = RawData
         name = 'raw_data'
         src_class = ModuleSync
         expose = 'expose'
-        result: Module.Result = wrap_into_result(data, name, src_class, expose)
+        result: Module.Result = wrap_into_result(data, error, name, src_class, expose)
 
         assert isinstance(result, Module.Result)
         assert result.result == data
+        assert result.error is error
         assert result.interface == interface
         assert result.name == name
         assert result.src_class == src_class
