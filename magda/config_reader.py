@@ -37,7 +37,7 @@ class ConfigReader:
         shared_parameters: Optional[Dict] = None,
         *,
         logger: Optional[MagdaLogger.Config] = None,
-        hooks: Optional[Union[Dict[str, List[Callable]], List[Callable]]] = None
+        after_created: Optional[Union[Dict[str, List[Callable]], List[Callable]]] = None
     ) -> BasePipeline.Runtime:
         if config_parameters:
             cls._validate_config_parameters_structure(config_parameters)
@@ -70,14 +70,14 @@ class ConfigReader:
 
         pipeline = cls._add_modules_to_pipeline(modules, pipeline, module_factory)
 
-        if hooks:
+        if after_created:
             if not is_parallel_pipeline:
                 warnings.warn('Hooks passed in parameter `after_created` '
                               'will not be used in SequentialPipeline')
             else:
-                cls._check_hooks(hooks, {m.group for m in modules})
+                cls._check_hooks(after_created, {m.group for m in modules})
 
-        pipeline = cls._add_group_options(group_options, pipeline, hooks)
+        pipeline = cls._add_group_options(group_options, pipeline, after_created)
 
         # connect modules
         for mod in modules:

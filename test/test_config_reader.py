@@ -430,7 +430,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(
                 config, ModuleFactory,
-                hooks=[callable_1, callable_2, callable_2]
+                after_created=[callable_1, callable_2, callable_2]
             )
 
         assert 3 == len(pipeline.modules)
@@ -455,7 +455,7 @@ class TestConfigReader:
 
         with open(config_file) as config:
             config = config.read()
-            pipeline = await ConfigReader.read(config, ModuleFactory, hooks={
+            pipeline = await ConfigReader.read(config, ModuleFactory, after_created={
                 "g1": [callable_1, callable_2, callable_2],
                 "g2": [callable_1],
                 "g3": []
@@ -478,7 +478,11 @@ class TestConfigReader:
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
-                await ConfigReader.read(config, ModuleFactory, hooks=[callable_1, 'non-callable'])
+                await ConfigReader.read(
+                    config,
+                    ModuleFactory,
+                    after_created=[callable_1, 'non-callable']
+                )
 
     @pytest.mark.asyncio
     async def test_should_not_accept_non_callables_in_hooks_dict_structure(self):
@@ -493,7 +497,7 @@ class TestConfigReader:
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
-                await ConfigReader.read(config, ModuleFactory, hooks={
+                await ConfigReader.read(config, ModuleFactory, after_created={
                     'g1': [callable_1, callable_1],
                     'g2': [callable_1, 34]
                 })
@@ -511,7 +515,7 @@ class TestConfigReader:
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
-                await ConfigReader.read(config, ModuleFactory, hooks={
+                await ConfigReader.read(config, ModuleFactory, after_created={
                     'g1': [callable_1, callable_1],
                     'g20': [callable_1]
                 })
@@ -526,4 +530,8 @@ class TestConfigReader:
         with open(config_file) as config:
             config = config.read()
             with pytest.raises(WrongParameterValueException):
-                await ConfigReader.read(config, ModuleFactory, hooks='THIS IS A WRONG VALUE')
+                await ConfigReader.read(
+                    config,
+                    ModuleFactory,
+                    after_created='THIS IS A WRONG VALUE'
+                )

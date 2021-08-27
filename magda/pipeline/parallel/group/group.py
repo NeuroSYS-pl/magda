@@ -24,7 +24,7 @@ class Group:
         self.replicas = replicas
         self.options = options
         self._state_type = state_type
-        self._validate_after_creeated_hooks(self.hooks)
+        self._validate_after_created_hooks(self.hooks)
 
     def set_replicas(self, replicas: int) -> Group:
         self.replicas = replicas
@@ -59,7 +59,7 @@ class Group:
             options=self.options,
         )
 
-    def _validate_after_creeated_hooks(self, hooks):
+    def _validate_after_created_hooks(self, hooks):
         if hooks:
             if isinstance(hooks, list):
                 if len(hooks) > 0:
