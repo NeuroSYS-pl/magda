@@ -140,7 +140,7 @@ class TestParallelPipelineSerial:
         builder = ParallelPipeline()
 
         def callable_1():
-            callable_1_counter.put(1)
+            pass
 
         with pytest.raises(Exception):
             builder.add_group(builder.Group('g1', after_created=[callable_1, "test"]))
