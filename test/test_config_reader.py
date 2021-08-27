@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
 import pytest
+import ray
 from pathlib import Path
-# from ray.util.queue import Queue
+from ray.util.queue import Queue
 
 from magda.module.module import Module
 from magda.module.factory import ModuleFactory
@@ -15,6 +16,13 @@ from magda.exceptions import (WrongParametersStructureException,
 
 class MockTestInterface(Module.Interface):
     pass
+
+
+@pytest.fixture(scope='class')
+def ray_context():
+    ray.init(num_cpus=1)
+    yield None
+    ray.shutdown()
 
 
 class TestConfigReader:
@@ -402,120 +410,120 @@ class TestConfigReader:
         assert 1 == len(pipeline.modules)
         assert pipeline.name == numeric_name
 
-    # @pytest.mark.asyncio
-    # async def test_should_correctly_init_parallel_pipeline_with_callable_hooks_in_list(self):
+    @pytest.mark.asyncio
+    async def test_should_correctly_init_parallel_pipeline_with_hooks_in_list(self, ray_context):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     callable_1_counter = Queue()
-    #     callable_2_counter = Queue()
+        callable_1_counter = Queue()
+        callable_2_counter = Queue()
 
-    #     def callable_1():
-    #         callable_1_counter.put(1)
+        def callable_1():
+            callable_1_counter.put(1)
 
-    #     def callable_2():
-    #         callable_2_counter.put(2)
+        def callable_2():
+            callable_2_counter.put(2)
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         pipeline = await ConfigReader.read(
-    #             config, ModuleFactory,
-    #             hooks=[callable_1, callable_2, callable_2]
-    #         )
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(
+                config, ModuleFactory,
+                hooks=[callable_1, callable_2, callable_2]
+            )
 
-    #     assert 3 == len(pipeline.modules)
-    #     assert 4 == callable_1_counter.qsize()
-    #     assert 8 == callable_2_counter.qsize()
+        assert 3 == len(pipeline.modules)
+        assert 4 == callable_1_counter.qsize()
+        assert 8 == callable_2_counter.qsize()
 
-    # @pytest.mark.asyncio
-    # async def test_should_correctly_init_parallel_pipeline_with_callable_hooks_in_dictionary(self):
+    @pytest.mark.asyncio
+    async def test_should_correctly_init_parallel_pipeline_with_hooks_in_dict(self, ray_context):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     callable_1_counter = Queue()
-    #     callable_2_counter = Queue()
+        callable_1_counter = Queue()
+        callable_2_counter = Queue()
 
-    #     def callable_1():
-    #         callable_1_counter.put(1)
+        def callable_1():
+            callable_1_counter.put(1)
 
-    #     def callable_2():
-    #         callable_2_counter.put(2)
+        def callable_2():
+            callable_2_counter.put(2)
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         pipeline = await ConfigReader.read(config, ModuleFactory, hooks={
-    #             "g1": [callable_1, callable_2, callable_2],
-    #             "g2": [callable_1],
-    #             "g3": []
-    #         })
+        with open(config_file) as config:
+            config = config.read()
+            pipeline = await ConfigReader.read(config, ModuleFactory, hooks={
+                "g1": [callable_1, callable_2, callable_2],
+                "g2": [callable_1],
+                "g3": []
+            })
 
-    #     assert 3 == len(pipeline.modules)
-    #     assert 3 == callable_1_counter.qsize()
-    #     assert 4 == callable_2_counter.qsize()
+        assert 3 == len(pipeline.modules)
+        assert 3 == callable_1_counter.qsize()
+        assert 4 == callable_2_counter.qsize()
 
-    # @pytest.mark.asyncio
-    # async def test_should_not_accept_non_callables_in_hooks_list(self):
+    @pytest.mark.asyncio
+    async def test_should_not_accept_non_callables_in_hooks_list(self):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     def callable_1():
-    #         pass
+        def callable_1():
+            pass
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         with pytest.raises(WrongParameterValueException):
-    #             await ConfigReader.read(config, ModuleFactory, hooks=[callable_1, 'non-callable'])
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory, hooks=[callable_1, 'non-callable'])
 
-    # @pytest.mark.asyncio
-    # async def test_should_not_accept_non_callables_in_hooks_dict_structure(self):
+    @pytest.mark.asyncio
+    async def test_should_not_accept_non_callables_in_hooks_dict_structure(self):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     def callable_1():
-    #         pass
+        def callable_1():
+            pass
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         with pytest.raises(WrongParameterValueException):
-    #             await ConfigReader.read(config, ModuleFactory, hooks={
-    #                 'g1': [callable_1, callable_1],
-    #                 'g2': [callable_1, 34]
-    #             })
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory, hooks={
+                    'g1': [callable_1, callable_1],
+                    'g2': [callable_1, 34]
+                })
 
-    # @pytest.mark.asyncio
-    # async def test_should_not_accept_non_existing_groups_in_hooks_dict(self):
+    @pytest.mark.asyncio
+    async def test_should_not_accept_non_existing_groups_in_hooks_dict(self):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     def callable_1():
-    #         pass
+        def callable_1():
+            pass
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         with pytest.raises(WrongParameterValueException):
-    #             await ConfigReader.read(config, ModuleFactory, hooks={
-    #                 'g1': [callable_1, callable_1],
-    #                 'g20': [callable_1]
-    #             })
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory, hooks={
+                    'g1': [callable_1, callable_1],
+                    'g20': [callable_1]
+                })
 
-    # @pytest.mark.asyncio
-    # async def test_should_not_accept_wrong_type_of_hooks_parameter(self):
+    @pytest.mark.asyncio
+    async def test_should_not_accept_wrong_type_of_hooks_parameter(self):
 
-    #     self.prepare_basic_hooks_test_modules_factory()
+        self.prepare_basic_hooks_test_modules_factory()
 
-    #     config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
+        config_file = self.get_config_file('correct_exemplary_config_with_groups.yaml')
 
-    #     with open(config_file) as config:
-    #         config = config.read()
-    #         with pytest.raises(WrongParameterValueException):
-    #             await ConfigReader.read(config, ModuleFactory, hooks='THIS IS A WRONG VALUE')
+        with open(config_file) as config:
+            config = config.read()
+            with pytest.raises(WrongParameterValueException):
+                await ConfigReader.read(config, ModuleFactory, hooks='THIS IS A WRONG VALUE')

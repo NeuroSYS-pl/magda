@@ -129,6 +129,23 @@ class TestParallelPipelineSerial:
         assert 2 == callable_2_counter.qsize()
 
     @pytest.mark.asyncio
+    async def test_should_fail_on_adding_to_group_hooks_with_incorrect_type(self, ray_context):
+        builder = ParallelPipeline()
+
+        with pytest.raises(Exception):
+            builder.add_group(builder.Group('g1', after_created="test"))
+
+    @pytest.mark.asyncio
+    async def test_should_fail_on_adding_to_group_non_callable_hooks(self, ray_context):
+        builder = ParallelPipeline()
+
+        def callable_1():
+            callable_1_counter.put(1)
+
+        with pytest.raises(Exception):
+            builder.add_group(builder.Group('g1', after_created=[callable_1, "test"]))
+
+    @pytest.mark.asyncio
     async def test_can_create_multiple_dependent_groups(self, ray_context):
         builder = ParallelPipeline()
         builder.add_module(ModuleA('m1', group='g1'))

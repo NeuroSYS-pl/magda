@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import List, Optional, Callable
 
 from magda.module.module import Module
@@ -23,6 +24,7 @@ class Group:
         self.replicas = replicas
         self.options = options
         self._state_type = state_type
+        self._validate_after_creeated_hooks(self.hooks)
 
     def set_replicas(self, replicas: int) -> Group:
         self.replicas = replicas
@@ -56,3 +58,17 @@ class Group:
             state_type=self.state_type,
             options=self.options,
         )
+
+    def _validate_after_creeated_hooks(self, hooks):
+        if hooks:
+            if isinstance(hooks, list):
+                if len(hooks) > 0:
+                    if not all(callable(hook) for hook in hooks):
+                        raise Exception("Parameter 'after_created' in Group constructor "
+                                        "contains a list with non-callable elements.")
+                else:
+                    warnings.warn("Parameter 'after_created' in Group constructor "
+                                  "contains an empty list.")
+            else:
+                raise Exception("Parameter 'after_created' in Group constructor "
+                                "should be a list")
