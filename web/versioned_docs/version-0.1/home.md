@@ -4,6 +4,9 @@ title: What is MAGDA?
 sidebar_position: 1
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 import SequentialStateless from './assets/home/sequential-stateless.svg';
 import SequentialStateful from './assets/home/sequential-stateful.svg';
 import ParallelStateless from './assets/home/parallel-stateless.svg';
@@ -65,11 +68,36 @@ Each module defines its ancestors creating a dependency relationship. A module m
 
 Each of the pipeline scenarios enclosed below has a separate section in this documentation, devoted to describing it in detail.
 
-| | Stateless | Stateful |
-|:--:|:--:|:--:|
-| **Sequential** | <SequentialStateless className="diagram" width="100%" /> | <SequentialStateful className="diagram" width="100%" /> |
-| **Parallel** | <ParallelStateless className="diagram" width="100%" /> | <ParallelStateful className="diagram" width="100%" /> |
-| **Parallel Actor Pool** | <ActorPoolStateless className="diagram" width="100%" /> | <ActorPoolStateful className="diagram" width="100%" /> |
+<Tabs
+  defaultValue="stateless-sequential"
+  values={[
+    {label: "Stateless Sequential", value: "stateless-sequential"},
+    {label: "Stateless Parallel", value: "stateless-parallel"},
+    {label: "Stateless Parallel Actor Pool", value: "stateless-actor-pool"},
+    {label: "Stateful Sequential", value: "stateful-sequential"},
+    {label: "Stateful Parallel", value: "stateful-parallel"},
+    {label: "Stateful Parallel Actor Pool", value: "stateful-actor-pool"},
+  ]}
+>
+  <TabItem value="stateless-sequential">
+    <SequentialStateless className="diagram" width="100%" />
+  </TabItem>
+  <TabItem value="stateless-parallel">
+    <ParallelStateless className="diagram" width="100%" />
+  </TabItem>
+  <TabItem value="stateless-actor-pool">
+    <ActorPoolStateless className="diagram" width="100%" />
+  </TabItem>
+  <TabItem value="stateful-sequential">
+    <SequentialStateful className="diagram" width="100%" />
+  </TabItem>
+  <TabItem value="stateful-parallel">
+    <ParallelStateful className="diagram" width="100%" />
+  </TabItem>
+  <TabItem value="stateful-actor-pool">
+    <ActorPoolStateful className="diagram" width="100%" />
+  </TabItem>
+</Tabs>
 
 ### Sequential, Parallel, and ParallelPool pipelines
  

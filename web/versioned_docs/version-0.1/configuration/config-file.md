@@ -92,7 +92,7 @@ Option | Required   | Note
 
 ### Sequential pipeline
 
-<Example1Svg className="diagram" width="40%" />
+<Example1Svg className="diagram" width="30%" />
 
 ```yaml title="sequential.config.yml"
 modules:
@@ -125,7 +125,7 @@ There are also some `shared_parameters` added which are accessible from every mo
 
 ### Sequential pipeline with aggregation module
 
-<Example2Svg className="diagram" width="40%" />
+<Example2Svg className="diagram" width="30%" />
 
 ```yaml title="aggregated.config.yml"
 modules:
@@ -155,7 +155,7 @@ In this example `mod_a` output is an input to the two consecutive modules. Modul
 
 ### Parallel pipeline with aggregation module
 
-<Example3Svg className="diagram" width="75%" />
+<Example3Svg className="diagram" width="60%" />
 
 ```yaml title="parallel.config.yml"
 modules:
@@ -206,7 +206,7 @@ But in a parallel pipeline, the `group` parameter is mandatory. For `group_2` th
 
 ### ParallelPool with aggregation module
 
-<Example4Svg className="diagram" width="75%" />
+<Example4Svg className="diagram" width="60%" />
 
 ```yaml title="parallel-actor-pool.config.yml"
 modules:
