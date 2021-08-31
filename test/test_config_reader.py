@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import pytest
 import ray
-from pathlib import Path
 from ray.util.queue import Queue
+from pathlib import Path
 
 from magda.module.module import Module
 from magda.module.factory import ModuleFactory
@@ -116,7 +116,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory, correct_parameters)
 
-        assert 3 == len(pipeline.modules)
+        assert len(pipeline.modules) == 3
         assert issubclass(pipeline.modules[0].interface, MockTestInterface)
         assert issubclass(pipeline.modules[1].interface, MockTestInterface)
         assert pipeline.modules[2].input_modules == ['mod1', 'mod2']
@@ -214,7 +214,7 @@ class TestConfigReader:
             for module in pipeline.modules
         }
 
-        assert 4 == len(pipeline.modules)
+        assert len(pipeline.modules) == 4
         assert modules_exposed_dict['mod0'] == 'sample-result'
         assert modules_exposed_dict['mod1'] is None
         assert modules_exposed_dict['mod2'] == 'mod2'
@@ -258,7 +258,7 @@ class TestConfigReader:
             for module in pipeline.modules
         }
 
-        assert 4 == len(pipeline.modules)
+        assert len(pipeline.modules) == 4
         assert modules_exposed_dict['mod0'] == 'sample-result'
         assert modules_exposed_dict['mod1'] is None
         assert modules_exposed_dict['mod2'] == 'mod2'
@@ -348,7 +348,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
-        assert 1 == len(pipeline.modules)
+        assert len(pipeline.modules) == 1
         assert 'TestPipeline' == pipeline.name
 
     @pytest.mark.asyncio
@@ -368,7 +368,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory, name=overriding_name)
 
-        assert 1 == len(pipeline.modules)
+        assert len(pipeline.modules) == 1
         assert overriding_name == pipeline.name
 
     @pytest.mark.asyncio
@@ -386,7 +386,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory)
 
-        assert 1 == len(pipeline.modules)
+        assert len(pipeline.modules) == 1
         assert pipeline.name is not None
         assert 'Pipeline-' in pipeline.name
 
@@ -407,7 +407,7 @@ class TestConfigReader:
             config = config.read()
             pipeline = await ConfigReader.read(config, ModuleFactory, name=numeric_name)
 
-        assert 1 == len(pipeline.modules)
+        assert len(pipeline.modules) == 1
         assert pipeline.name == numeric_name
 
     @pytest.mark.asyncio
@@ -433,9 +433,9 @@ class TestConfigReader:
                 after_created=[callable_1, callable_2, callable_2]
             )
 
-        assert 3 == len(pipeline.modules)
-        assert 4 == callable_1_counter.qsize()
-        assert 8 == callable_2_counter.qsize()
+        assert len(pipeline.modules) == 3
+        assert callable_1_counter.qsize() == 4
+        assert callable_2_counter.qsize() == 8
 
     @pytest.mark.asyncio
     async def test_should_correctly_init_parallel_pipeline_with_hooks_in_dict(self, ray_context):
@@ -461,9 +461,9 @@ class TestConfigReader:
                 "g3": []
             })
 
-        assert 3 == len(pipeline.modules)
-        assert 3 == callable_1_counter.qsize()
-        assert 4 == callable_2_counter.qsize()
+        assert len(pipeline.modules) == 3
+        assert callable_1_counter.qsize() == 3
+        assert callable_2_counter.qsize() == 4
 
     @pytest.mark.asyncio
     async def test_should_not_accept_non_callables_in_hooks_list(self):

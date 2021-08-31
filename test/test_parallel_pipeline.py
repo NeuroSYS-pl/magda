@@ -124,9 +124,9 @@ class TestParallelPipelineSerial:
         pipeline = await builder.build()
         assert isinstance(pipeline, ParallelPipeline.Runtime)
         assert len(pipeline.groups) == 2
-        assert set([g.name for g in pipeline.groups]) == set(['g1', 'g2'])
-        assert 1 == callable_1_counter.qsize()
-        assert 2 == callable_2_counter.qsize()
+        assert set([g.name for g in pipeline.groups]) == {'g1', 'g2'}
+        assert callable_1_counter.qsize() == 1
+        assert callable_2_counter.qsize() == 2
 
     @pytest.mark.asyncio
     async def test_should_fail_on_adding_to_group_hooks_with_incorrect_type(self, ray_context):

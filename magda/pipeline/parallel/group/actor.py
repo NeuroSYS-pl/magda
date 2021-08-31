@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from uuid import UUID
-from typing import List, Optional, List, Callable
+from typing import List, Optional, Callable
 
 import ray
 
