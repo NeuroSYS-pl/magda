@@ -23,3 +23,12 @@
   align-items: center;
   justify-content: center;
 }
+
+.homeButton {
+  margin: 0 1rem;
+  min-width: 20%;
+}
+
+.homeIcon {
+  margin-left: 0.5rem;
+}
