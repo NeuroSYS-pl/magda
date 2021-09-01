@@ -81,8 +81,6 @@ The capabilities of aggregation modules are presented below with simple examples
 First, it's necessary to declare module classes. Supposing that, the pipeline consists of only two modules: one regular module and one aggregation module.
 The regular module returns the value of its parameter `val` multiplied by the request - the value passed during `pipeline.run(request)` invocation.
 
-The pipeline can be declared in **one of two ways** - from code (in `Code-first` mode) or using a configuration file (`Config-first`).
-
 ```python
 from magda.module import Module
 from magda.decorators import finalize, accept, expose 
@@ -101,6 +99,8 @@ class AggregationModule(Module.Aggregate):
 ```
 
 The next step is to build a pipeline. For simplicity, a sequential pipeline which consists of only two modules is declared - a regular module that passes its output forward and an aggregate module that collects data.
+
+The pipeline can be declared in **one of two ways** - from code (in `Code-first` mode) or using a configuration file (`Config-first`).
 
 <Tabs
   defaultValue="code"
