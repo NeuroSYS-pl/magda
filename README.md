@@ -5,10 +5,10 @@
 The library works best when the code can be split into independent operations with clearly defined input and outputs. The main idea is to use *MAGDA* to **process code in a sequential flow**. Think of this as nodes with input/output as edges in directed graphs.
 
 *MAGDA* supports the following operations:  
-&nbsp;&nbsp;&nbsp;&nbsp; :building_construction: &nbsp; building an application pipeline from a configuration file and from code,  
-&nbsp;&nbsp;&nbsp;&nbsp; :clock4: &nbsp; asynchronous and synchronous processing,   
-&nbsp;&nbsp;&nbsp;&nbsp; :scissors:	&nbsp; dividing modules into groups for the asynchronous pipeline,   
-&nbsp;&nbsp;&nbsp;&nbsp; :dart:	&nbsp; aggregation of partial results.
+&nbsp;&nbsp;&nbsp;&nbsp; 🏗️ &nbsp; building an application pipeline from a configuration file and from code,  
+&nbsp;&nbsp;&nbsp;&nbsp; 🕓 &nbsp; asynchronous and synchronous processing,   
+&nbsp;&nbsp;&nbsp;&nbsp; ✂️	&nbsp; dividing modules into groups for the asynchronous pipeline,   
+&nbsp;&nbsp;&nbsp;&nbsp; 🎯	&nbsp; aggregation of partial results.
 
 *MAGDA* can be applied almost anywhere but is especially well-suited for BigData parallel processing and ML pipelines intended for carrying out multiple, repeatable experiments.
 
