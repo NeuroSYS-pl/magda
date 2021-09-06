@@ -1,4 +1,4 @@
-# MAGDA :girl: 
+# MAGDA 👧
 
 *MAGDA* is a Python library intended for **assembling a stream-like architecture** of an application following functional programming principles, by **using predefined interfaces and classes**. *MAGDA* stands for Modular and Asynchronous Graphs with Directed and Acyclic edges, and is the backbone of the library.   
 
@@ -12,7 +12,7 @@ The library works best when the code can be split into independent operations wi
 
 *MAGDA* can be applied almost anywhere but is especially well-suited for BigData parallel processing and ML pipelines intended for carrying out multiple, repeatable experiments.
 
-| :open_book: &nbsp; Read more in the documentation on the [Github Wiki](https://github.com/NeuroSYS-pl/magda/wiki). |
+| :open_book: &nbsp; Read more in the documentation on the [GitHub Pages](https://neurosys-pl.github.io/magda/). |
 | :---: |
 
 
@@ -31,7 +31,7 @@ pip install https://github.com/NeuroSYS-pl/magda/archive/main.zip
 ## Quickstart
 Having installed *MAGDA*, a simplistic pipeline can be created with just a few lines of code.
 
-<img src="examples/images/pipeline-schema.png" alt="Pipeline schema" width="475px;"/>
+![Pipeline Schema](https://raw.githubusercontent.com/NeuroSYS-pl/magda/main/examples/images/pipeline-schema.png)
 
 The above pipeline is composed of just 2 modules. The first one sums all numbers from a given list and outputs a single number. And the second module raises that number to a given power.
 
@@ -45,7 +45,7 @@ Every pipeline consists of a couple of steps:
 4. Pipeline build
 5. Pipeline run
 
-<img src="examples/images/simple-pipeline.png" alt="Pipeline schema" width="450px;"/>
+![Simple Pipeline](https://raw.githubusercontent.com/NeuroSYS-pl/magda/main/examples/images/simple-pipeline.png)
 
 ```python
 import asyncio
