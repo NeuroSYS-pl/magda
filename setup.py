@@ -17,7 +17,7 @@ test_dependencies = [
 
 setuptools.setup(
     name='magda',
-    version='0.2.0.rc1',
+    version='0.2.0.rc2',
     author='NeuroSYS Research',
     description=(
         'Library for building Modular and Asynchronous Graphs '
