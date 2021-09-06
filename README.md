@@ -12,7 +12,7 @@ The library works best when the code can be split into independent operations wi
 
 *MAGDA* can be applied almost anywhere but is especially well-suited for BigData parallel processing and ML pipelines intended for carrying out multiple, repeatable experiments.
 
-| :open_book: &nbsp; Read more in the documentation on the [GitHub Pages](https://neurosys-pl.github.io/magda/). |
+| 📖 &nbsp; Read more in the documentation on the [GitHub Pages](https://neurosys-pl.github.io/magda/). |
 | :---: |
 
 
