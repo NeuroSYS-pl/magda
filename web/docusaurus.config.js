@@ -13,6 +13,7 @@ module.exports = {
   // favicon: 'img/favicon.ico',
   organizationName: 'NeuroSYS-pl',
   projectName: 'magda',
+  trailingSlash: true,
   themeConfig: {
     navbar: {
       title: 'MAGDA 👧',
